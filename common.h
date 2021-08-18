@@ -19,14 +19,10 @@ static constexpr int action_dims = 2;
 using State = Eigen::Matrix<double, state_dims, 1>;
 using Action = Eigen::Matrix<double, action_dims, 1>;
 
-struct Params {
-    State x;
-    Action u;
-    double active;
-};
-
-template<int InputDims, int OutputDims>
+template<typename T, int InputDims, int OutputDims>
 struct ADBase {
+    using Params = T;
+
     using Scalar = Hopper::rcg::Scalar;
     using ScalarTraits = Hopper::rcg::ScalarTraits;
     using JointState = Hopper::rcg::JointState;
@@ -43,5 +39,10 @@ protected:
     Hopper::rcg::Matrix<Eigen::Dynamic, 1> ad_y{output_dims};
     CppAD::ADFun<double> ad_fun;
 };
+
+#define ASSIGN_VECTOR(to, from, it, size) (to) = (from).segment<(size)>(it); (it) += (size);
+#define ASSIGN_COLS(to, from, it, size) (to) = (from).middleCols<(size)>(it); (it) += (size);
+#define ASSIGN_BLOCK(to, from, it, size) (to) = (from).block<(size), (size)>((it), (it)); (it) += (size);
+#define FILL_VECTOR(to, from, it, size) (to).segment<(size)>(it) = (from); (it) += (size);
 
 #endif //TO_IHC_2_COMMON_H

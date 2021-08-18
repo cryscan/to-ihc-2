@@ -9,11 +9,20 @@
 
 #include "common.h"
 
+struct DynamicsParams {
+    State x;
+    Action u;
+    double active;
+};
+
 #define INPUT_DIMS  state_dims + action_dims + 1
 #define OUTPUT_DIMS state_dims + 3
+#define BASE        ADBase<DynamicsParams, INPUT_DIMS, OUTPUT_DIMS>
 
-struct Dynamics : public ADBase<INPUT_DIMS, OUTPUT_DIMS> {
-    using Base = ADBase<INPUT_DIMS, OUTPUT_DIMS>;
+struct Dynamics : public BASE {
+    using Base = BASE;
+    using Base::Params;
+
     using Base::Scalar;
     using Base::ScalarTraits;
     using Base::JointState;
@@ -26,10 +35,7 @@ struct Dynamics : public ADBase<INPUT_DIMS, OUTPUT_DIMS> {
     using Matrix3 = Hopper::rcg::Matrix<3, 3>;
     using Affine3 = Eigen::Transform<Scalar, 3, Eigen::Affine>;
 
-    using ContactJacobian = Hopper::rcg::Matrix<3, joint_space_dims>;
-    using ContactJacobianTranspose = Hopper::rcg::Matrix<joint_space_dims, 3>;
-
-    Dynamics(int num_iters, const Scalar& dt, const Scalar& mu)
+    Dynamics(int num_iters, double dt, double mu)
             : inverse_dynamics(inertia_properties, motion_transforms),
               jsim(inertia_properties, force_transforms),
               num_iters(num_iters),
@@ -41,10 +47,10 @@ struct Dynamics : public ADBase<INPUT_DIMS, OUTPUT_DIMS> {
     void build_map() override;
     void evaluate(const Params& params) override;
 
-    auto get_f() const { return f; }
-    auto get_foot_pos() const { return foot_pos; }
-    auto get_df_dx() const { return df_dx; }
-    auto get_df_du() const { return df_du; }
+    [[nodiscard]] auto get_f() const { return f; }
+    [[nodiscard]] auto get_foot_pos() const { return foot_pos; }
+    [[nodiscard]] auto get_df_dx() const { return df_dx; }
+    [[nodiscard]] auto get_df_du() const { return df_du; }
 
 private:
     mutable Hopper::rcg::HomogeneousTransforms transforms;
@@ -77,6 +83,7 @@ private:
 
 #undef INPUT_DIMS
 #undef OUTPUT_DIMS
+#undef BASE
 
 
 #endif //TO_IHC_2_DYNAMICS_H

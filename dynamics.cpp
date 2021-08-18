@@ -7,6 +7,9 @@
 using namespace Hopper;
 
 std::tuple<Dynamics::JointState, Dynamics::JointState> Dynamics::step() const {
+    using ContactJacobian = Hopper::rcg::Matrix<3, joint_space_dims>;
+    using ContactJacobianTranspose = Hopper::rcg::Matrix<joint_space_dims, 3>;
+
     JointState qm = q + u * dt / 2.0;
 
     JointState h, nle;
@@ -63,9 +66,7 @@ void Dynamics::print(std::ostream& os, const Params& params) const {
        << foot.translation().transpose() << '\t' << endl;
 }
 
-#define ASSIGN_VECTOR(from, to, it, size) (to) = (from).segment<(size)>(it); (it) += (size);
-#define ASSIGN_COLS(from, to, it, size) (to) = (from).middleCols<(size)>(it); (it) += (size);
-#define FILL_VECTOR(from, to, it, size) (to).segment<(size)>(it) = (from); (it) += (size);
+#define JACOBIAN_VIEW(jac) Eigen::Map<Eigen::VectorXd>((jac).data(), (jac).size())
 
 void Dynamics::evaluate(const Params& params) {
     using Jacobian = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
@@ -76,33 +77,33 @@ void Dynamics::evaluate(const Params& params) {
 
     x << params.x, params.u, double(params.active);
     y = ad_fun.Forward(0, x);
-    Eigen::Map<Eigen::VectorXd>(jac.data(), jac.size()) = ad_fun.Jacobian(x);
+    JACOBIAN_VIEW(jac) = ad_fun.Jacobian(x);
 
     Eigen::DenseIndex it = 0;
-    ASSIGN_VECTOR(y, f, it, state_dims)
-    ASSIGN_VECTOR(y, foot_pos, it, 3)
+    ASSIGN_VECTOR(f, y, it, state_dims)
+    ASSIGN_VECTOR(foot_pos, y, it, 3)
 
     it = 0;
     Jacobian jac_ = jac.topRows<state_dims>();
-    ASSIGN_COLS(jac_, df_dx, it, state_dims)
-    ASSIGN_COLS(jac_, df_du, it, action_dims)
+    ASSIGN_COLS(df_dx, jac_, it, state_dims)
+    ASSIGN_COLS(df_du, jac_, it, action_dims)
 }
 
 void Dynamics::build_map() {
     CppAD::Independent(ad_x);
 
     Eigen::DenseIndex it = 0;
-    ASSIGN_VECTOR(ad_x, q, it, joint_space_dims)
-    ASSIGN_VECTOR(ad_x, u, it, joint_space_dims)
-    ASSIGN_VECTOR(ad_x, tau, it, action_dims)
+    ASSIGN_VECTOR(q, ad_x, it, joint_space_dims)
+    ASSIGN_VECTOR(u, ad_x, it, joint_space_dims)
+    ASSIGN_VECTOR(tau, ad_x, it, action_dims)
     active = ad_x(it);
 
     std::tie(q, u) = step();
 
     it = 0;
-    FILL_VECTOR(q, ad_y, it, joint_space_dims)
-    FILL_VECTOR(u, ad_y, it, joint_space_dims)
-    FILL_VECTOR(compute_foot_pos(), ad_y, it, 3)
+    FILL_VECTOR(ad_y, q, it, joint_space_dims)
+    FILL_VECTOR(ad_y, u, it, joint_space_dims)
+    FILL_VECTOR(ad_y, compute_foot_pos(), it, 3)
 
-    ad_fun.Dependent(ad_y);
+    ad_fun.Dependent(ad_x, ad_y);
 }
