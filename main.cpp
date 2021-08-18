@@ -2,6 +2,7 @@
 #include <fstream>
 
 #include "dynamics.h"
+#include "cost.h"
 
 using namespace Hopper;
 
@@ -14,7 +15,7 @@ int main() {
 
     Dynamics dynamics(50, 0.01, 1);
 
-    Dynamics::Params params;
+    Params params;
     in >> params.x(0) >> params.x(1) >> params.x(2) >> params.x(3);
     in >> params.x(4) >> params.x(5) >> params.x(6) >> params.x(7);
     in >> params.u(0) >> params.u(1);

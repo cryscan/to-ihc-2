@@ -7,5 +7,5 @@ set(EXECUTEBLE_NAME control)
 
 add_subdirectory(hopper)
 
-add_executable(control main.cpp dynamics.cpp)
+add_executable(control main.cpp dynamics.cpp cost.cpp)
 target_link_libraries(control hopper)

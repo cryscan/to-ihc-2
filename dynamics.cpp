@@ -64,18 +64,28 @@ void Dynamics::print(std::ostream& os, const Params& params) const {
 }
 
 #define ASSIGN_VECTOR(from, to, it, size) (to) = (from).segment<(size)>(it); (it) += (size);
+#define ASSIGN_COLS(from, to, it, size) (to) = (from).middleCols<(size)>(it); (it) += (size);
 #define FILL_VECTOR(from, to, it, size) (to).segment<(size)>(it) = (from); (it) += (size);
 
 void Dynamics::evaluate(const Params& params) {
+    using Jacobian = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+
     Eigen::VectorXd x(input_dims);
     Eigen::VectorXd y(output_dims);
+    Jacobian jac(output_dims, input_dims);
 
     x << params.x, params.u, double(params.active);
     y = ad_fun.Forward(0, x);
+    Eigen::Map<Eigen::VectorXd>(jac.data(), jac.size()) = ad_fun.Jacobian(x);
 
     Eigen::DenseIndex it = 0;
     ASSIGN_VECTOR(y, f, it, state_dims)
     ASSIGN_VECTOR(y, foot_pos, it, 3)
+
+    it = 0;
+    Jacobian jac_ = jac.topRows<state_dims>();
+    ASSIGN_COLS(jac_, df_dx, it, state_dims)
+    ASSIGN_COLS(jac_, df_du, it, action_dims)
 }
 
 void Dynamics::build_map() {

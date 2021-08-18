@@ -7,39 +7,27 @@
 
 #include <Eigen/Geometry>
 
-#include "hopper/declarations.h"
-#include "hopper/transforms.h"
-#include "hopper/jacobians.h"
-#include "hopper/inertia_properties.h"
-#include "hopper/jsim.h"
-#include "hopper/inverse_dynamics.h"
+#include "common.h"
 
-struct Dynamics {
-    using Scalar = Hopper::rcg::Scalar;
-    using ScalarTraits = Hopper::rcg::ScalarTraits;
+#define INPUT_DIMS  state_dims + action_dims + 1
+#define OUTPUT_DIMS state_dims + 3
 
-    static constexpr int joint_space_dims = Hopper::rcg::JointSpaceDimension;
-    static constexpr int state_dims = joint_space_dims + joint_space_dims;
-    static constexpr int action_dims = 2;
-    static constexpr int input_dims = state_dims + action_dims + 1;
-    static constexpr int output_dims = state_dims + 3;
+struct Dynamics : public ADBase<INPUT_DIMS, OUTPUT_DIMS> {
+    using Base = ADBase<INPUT_DIMS, OUTPUT_DIMS>;
+    using Base::Scalar;
+    using Base::ScalarTraits;
+    using Base::JointState;
+    using Base::Action;
+
+    using Base::input_dims;
+    using Base::output_dims;
 
     using Vector3 = Hopper::rcg::Vector3;
     using Matrix3 = Hopper::rcg::Matrix<3, 3>;
     using Affine3 = Eigen::Transform<Scalar, 3, Eigen::Affine>;
 
-    using JointState = Hopper::rcg::JointState;
-    using Control = Hopper::rcg::Matrix<action_dims, 1>;
     using ContactJacobian = Hopper::rcg::Matrix<3, joint_space_dims>;
     using ContactJacobianTranspose = Hopper::rcg::Matrix<joint_space_dims, 3>;
-
-    using State = Eigen::Matrix<double, state_dims, 1>;
-    using Action = Eigen::Matrix<double, action_dims, 1>;
-    struct Params {
-        State x;
-        Action u;
-        double active;
-    };
 
     Dynamics(int num_iters, const Scalar& dt, const Scalar& mu)
             : inverse_dynamics(inertia_properties, motion_transforms),
@@ -50,8 +38,8 @@ struct Dynamics {
 
     void print(std::ostream& os, const Params& params) const;
 
-    void build_map();
-    void evaluate(const Params& params);
+    void build_map() override;
+    void evaluate(const Params& params) override;
 
     auto get_f() const { return f; }
     auto get_foot_pos() const { return foot_pos; }
@@ -73,23 +61,22 @@ private:
     const Scalar mu;
 
     JointState q, u;
-    Control tau;
+    Action tau;
     Scalar active;
-
-    Hopper::rcg::Matrix<Eigen::Dynamic, 1> ad_x{input_dims};
-    Hopper::rcg::Matrix<Eigen::Dynamic, 1> ad_y{output_dims};
-    CppAD::ADFun<double> ad_fun;
 
     State f;
     Eigen::Vector3d foot_pos;
-    Eigen::Matrix<double, state_dims, state_dims> df_dx;
-    Eigen::Matrix<double, state_dims, action_dims> df_du;
+    Eigen::Matrix<double, state_dims, state_dims, Eigen::RowMajor> df_dx;
+    Eigen::Matrix<double, state_dims, action_dims, Eigen::RowMajor> df_du;
 
     std::tuple<JointState, JointState> step() const;
     [[nodiscard]] Vector3 prox(const Vector3& p) const;
 
     Vector3 compute_foot_pos() const;
 };
+
+#undef INPUT_DIMS
+#undef OUTPUT_DIMS
 
 
 #endif //TO_IHC_2_DYNAMICS_H
