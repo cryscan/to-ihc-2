@@ -41,7 +41,7 @@ void Cost::evaluate(const CostParams& params) {
     x0 << params.x, params.u, params.x_, params.x_star, params.u_;
     y = ad_fun.Forward(0, x0);
     Jacobian jac = ad_fun.Jacobian(x0);
-    HESSIAN_VIEW(hess) = ad_fun.Hessian(x0, 0);
+    HESSIAN_VIEW(hess) = ad_fun.SparseHessian(x0, (Eigen::VectorXd(1) << 1.0).finished());
 
     f = y(0);
 
