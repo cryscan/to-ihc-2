@@ -5,6 +5,7 @@
 #ifndef TO_IHC_2_DYNAMICS_H
 #define TO_IHC_2_DYNAMICS_H
 
+#include <iostream>
 #include <Eigen/Geometry>
 
 #include "common.h"
@@ -12,16 +13,14 @@
 struct DynamicsParams {
     State x;
     Action u;
-    double active;
+    double active{0};
 };
 
 #define INPUT_DIMS  state_dims + action_dims + 1
-#define OUTPUT_DIMS state_dims + 3
-#define BASE        ADBase<DynamicsParams, INPUT_DIMS, OUTPUT_DIMS>
+#define OUTPUT_DIMS state_dims
 
-struct Dynamics : public BASE {
-    using Base = BASE;
-    using Base::Params;
+struct Dynamics : public ADBase<DynamicsParams, INPUT_DIMS, OUTPUT_DIMS> {
+    using Base = decltype(base_type());
 
     using Base::Scalar;
     using Base::ScalarTraits;
@@ -35,22 +34,25 @@ struct Dynamics : public BASE {
     using Matrix3 = Hopper::rcg::Matrix<3, 3>;
     using Affine3 = Eigen::Transform<Scalar, 3, Eigen::Affine>;
 
-    Dynamics(int num_iters, double dt, double mu)
+    Dynamics(int num_iters, double dt, double mu, double torque_limit)
             : inverse_dynamics(inertia_properties, motion_transforms),
               jsim(inertia_properties, force_transforms),
               num_iters(num_iters),
               dt(dt),
-              mu(mu) {}
-
-    void print(std::ostream& os, const Params& params) const;
+              mu(mu),
+              torque_limit(torque_limit),
+              ad_torque_limit(torque_limit) {}
 
     void build_map() override;
-    void evaluate(const Params& params) override;
+    void evaluate(const Params& params, EvalOption option) override;
+    void evaluate_foot_pos();
 
     [[nodiscard]] auto get_f() const { return f; }
     [[nodiscard]] auto get_foot_pos() const { return foot_pos; }
     [[nodiscard]] auto get_df_dx() const { return df_dx; }
     [[nodiscard]] auto get_df_du() const { return df_du; }
+
+    const double torque_limit;
 
 private:
     mutable Hopper::rcg::HomogeneousTransforms transforms;
@@ -65,10 +67,14 @@ private:
     const int num_iters;
     const Scalar dt;
     const Scalar mu;
+    const Scalar ad_torque_limit;
 
     JointState q, u;
     Action tau;
     Scalar active;
+
+    Hopper::rcg::Matrix<Eigen::Dynamic, 1> ad_foot_pos;
+    CppAD::ADFun<double> ad_fun_foot_pos;
 
     State f;
     Eigen::Vector3d foot_pos;
@@ -83,7 +89,6 @@ private:
 
 #undef INPUT_DIMS
 #undef OUTPUT_DIMS
-#undef BASE
 
 
 #endif //TO_IHC_2_DYNAMICS_H

@@ -1,5 +1,6 @@
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
+import numpy as np
 
 file = open("cmake-build-debug/out.txt", 'r')
 states = []
@@ -8,10 +9,10 @@ for line in file.readlines():
     states.append(state)
 
 dt = 0.01
-L = 1
+L = 0.3
 
-fig = plt.figure(figsize=(5, 4))
-ax = fig.add_subplot(autoscale_on=False, xlim=(-L, L), ylim=(-L, 1.))
+fig = plt.figure(figsize=(10, 4))
+ax = fig.add_subplot(autoscale_on=False, xlim=(-2., 2.), ylim=(-1., 1.))
 ax.set_aspect('equal')
 ax.grid()
 
@@ -22,12 +23,15 @@ time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
 
 def animate(i):
     state = states[i]
-    base = state[0:3]
-    leg = state[3:6]
-    foot = state[6:9]
+    theta = state[2]
+    phi = state[3]
+
+    base = np.array([state[1], state[0] + 0.6])
+    leg = base + L * np.array([np.sin(theta), -np.cos(theta)])
+    foot = leg + L * np.array([np.sin(theta + phi), -np.cos(theta + phi)])
 
     x = [base[0], leg[0], foot[0]]
-    y = [base[2], leg[2], foot[2]]
+    y = [base[1], leg[1], foot[1]]
     line.set_data(x, y)
 
     time_text.set_text(time_template % (i * dt))

@@ -19,6 +19,11 @@ static constexpr int action_dims = 2;
 using State = Eigen::Matrix<double, state_dims, 1>;
 using Action = Eigen::Matrix<double, action_dims, 1>;
 
+enum class EvalOption {
+    ZERO_ORDER,
+    FIRST_ORDER,
+};
+
 template<typename T, int InputDims, int OutputDims>
 struct ADBase {
     using Params = T;
@@ -32,7 +37,13 @@ struct ADBase {
     static constexpr int output_dims = OutputDims;
 
     virtual void build_map() {};
-    virtual void evaluate(const Params& params) {};
+
+    void evaluate(EvalOption option = EvalOption::FIRST_ORDER) { this->evaluate(params, option); }
+    virtual void evaluate(const Params&, EvalOption option) {};
+
+    static constexpr ADBase<Params, input_dims, output_dims> base_type() {}
+
+    Params params;
 
 protected:
     Hopper::rcg::Matrix<Eigen::Dynamic, 1> ad_x{input_dims};
@@ -42,7 +53,6 @@ protected:
 
 #define ASSIGN_VECTOR(to, from, it, size) (to) = (from).segment<(size)>(it); (it) += (size);
 #define ASSIGN_COLS(to, from, it, size) (to) = (from).middleCols<(size)>(it); (it) += (size);
-#define ASSIGN_BLOCK(to, from, it, size) (to) = (from).block<(size), (size)>((it), (it)); (it) += (size);
 #define FILL_VECTOR(to, from, it, size) (to).segment<(size)>(it) = (from); (it) += (size);
 
 #endif //TO_IHC_2_COMMON_H

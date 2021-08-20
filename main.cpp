@@ -3,49 +3,54 @@
 
 #include "dynamics.h"
 #include "cost.h"
+#include "lqr.h"
 
 using namespace Hopper;
 
 int main() {
-    std::fstream fs("out.txt", std::ios::out | std::ios::trunc);
-    std::fstream in("in.txt", std::ios::in);
+    std::fstream is("in.txt", std::ios::in);
 
-    int num_iters;
-    in >> num_iters;
+    int horizon, num_iters;
+    is >> horizon >> num_iters;
 
-    Dynamics dynamics(50, 0.01, 1);
-    dynamics.build_map();
+    double alpha;
+    is >> alpha;
 
-    DynamicsParams dynamics_params;
-    in >> dynamics_params.x(0) >> dynamics_params.x(1) >> dynamics_params.x(2) >> dynamics_params.x(3);
-    in >> dynamics_params.x(4) >> dynamics_params.x(5) >> dynamics_params.x(6) >> dynamics_params.x(7);
-    in >> dynamics_params.u(0) >> dynamics_params.u(1);
+    Dynamics dynamics(50, 0.01, 1, 60);
+    for (int i = 0; i < dynamics.params.x.size(); ++i)
+        is >> dynamics.params.x(i);
+    is >> dynamics.params.u(0) >> dynamics.params.u(1);
 
     Eigen::VectorXd scale_state(8);
-    scale_state << 1.0, 0.1, 0.01, 0.01, 1.0, 1.0, 1.0, 1.0;
-    Eigen::Vector2d scale_action(0.1, 0.1);
+    for (int i = 0; i < scale_state.size(); ++i)
+        is >> scale_state(i);
 
-    Cost cost(0.9, scale_state, scale_action);
-    cost.build_map();
+    Eigen::Vector2d scale_action;
+    is >> scale_action(0) >> scale_action(1);
 
-    CostParams cost_params;
-    cost_params.x_star << -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+    Cost cost(alpha, scale_state, scale_action);
+    for (int i = 0; i < cost.params.x_star.size(); ++i)
+        is >> cost.params.x_star(i);
+
+    LQR lqr(horizon, 0.01, 2, dynamics, cost);
+    std::cout << "initialization finished" << std::endl;
+
+    {
+        lqr.nominal_rollout();
+        std::fstream os("out.txt", std::ios::out | std::ios::trunc);
+        lqr.print(os);
+    }
 
     for (int i = 0; i < num_iters; ++i) {
-        dynamics.evaluate(dynamics_params);
+        std::cout << "iter " << i << ":\t";
 
-        Eigen::Vector3d foot_pos = dynamics.get_foot_pos();
-        dynamics_params.active = foot_pos(2) < 0;
+        lqr.solve();
+        lqr.rollout();
 
-        dynamics_params.x = dynamics.get_f();
-        dynamics.print(fs, dynamics_params);
+        std::cout << lqr.cost_sum(0) << std::endl;
 
-        cost_params.x = dynamics_params.x;
-        cost_params.u = dynamics_params.u;
-        cost_params.x_ = cost_params.x;
-        cost_params.u_ = cost_params.u;
-
-        cost.evaluate(cost_params);
+        std::fstream os("out.txt", std::ios::out | std::ios::trunc);
+        lqr.print(os);
     }
 
     return 0;

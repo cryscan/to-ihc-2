@@ -8,16 +8,15 @@
 #include "common.h"
 
 struct CostParams {
-    State x, x_, x_star;
-    Action u, u_;
+    State x, x_prev, x_star;
+    Action u, u_prev;
 };
 
 #define INPUT_DIMS  3 * state_dims + 2 * action_dims
 #define OUTPUT_DIMS 1
-#define BASE        ADBase<CostParams, INPUT_DIMS, OUTPUT_DIMS>
 
-struct Cost : public BASE {
-    using Base = BASE;
+struct Cost : public ADBase<CostParams, INPUT_DIMS, OUTPUT_DIMS> {
+    using Base = decltype(base_type());
     using Base::Params;
 
     using Base::Scalar;
@@ -37,10 +36,18 @@ struct Cost : public BASE {
             : alpha(alpha),
               scale_state(scale_state.template cast<Scalar>()),
               scale_action(scale_action.template cast<Scalar>()),
-              f(0) {}
+              f(0) {
+        using Eigen::MatrixXd;
+
+        df_dxx = (1 - alpha) * scale_state.asDiagonal();
+        df_dxx += alpha * MatrixXd::Identity(state_dims, state_dims);
+
+        df_duu = (1 - alpha) * scale_action.asDiagonal();
+        df_duu += alpha * MatrixXd::Identity(action_dims, action_dims);
+    };
 
     void build_map() override;
-    void evaluate(const Params& params) override;
+    void evaluate(const Params& params, EvalOption option) override;
 
     [[nodiscard]] auto get_f() const { return f; }
     [[nodiscard]] auto get_df_dx() const { return df_dx; }
@@ -53,8 +60,8 @@ private:
     const Hopper::rcg::Matrix<state_dims, 1> scale_state;
     const Hopper::rcg::Matrix<action_dims, 1> scale_action;
 
-    State x, x_, x_star;
-    Action u, u_;
+    State x, x_prev, x_star;
+    Action u, u_prev;
 
     double f;
     Eigen::Matrix<double, 1, state_dims> df_dx;
@@ -67,6 +74,5 @@ private:
 
 #undef INPUT_DIMS
 #undef OUTPUT_DIMS
-#undef BASE
 
 #endif //TO_IHC_2_COST_H
