@@ -12,7 +12,7 @@ struct CostParams {
     Action u, u_prev;
 };
 
-#define INPUT_DIMS  3 * state_dims + 2 * action_dims
+#define INPUT_DIMS  (3 * state_dims + 2 * action_dims)
 #define OUTPUT_DIMS 1
 
 struct Cost : public ADBase<CostParams, INPUT_DIMS, OUTPUT_DIMS> {

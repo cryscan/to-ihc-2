@@ -16,7 +16,7 @@ struct DynamicsParams {
     double active{0};
 };
 
-#define INPUT_DIMS  state_dims + action_dims + 1
+#define INPUT_DIMS  (state_dims + action_dims + 1)
 #define OUTPUT_DIMS state_dims
 
 struct Dynamics : public ADBase<DynamicsParams, INPUT_DIMS, OUTPUT_DIMS> {
@@ -45,7 +45,7 @@ struct Dynamics : public ADBase<DynamicsParams, INPUT_DIMS, OUTPUT_DIMS> {
 
     void build_map() override;
     void evaluate(const Params& params, EvalOption option) override;
-    void evaluate_foot_pos();
+    void evaluate_extra();
 
     [[nodiscard]] auto get_f() const { return f; }
     [[nodiscard]] auto get_foot_pos() const { return foot_pos; }
@@ -73,18 +73,20 @@ private:
     Action tau;
     Scalar active;
 
-    Hopper::rcg::Matrix<Eigen::Dynamic, 1> ad_foot_pos;
-    CppAD::ADFun<double> ad_fun_foot_pos;
+    Hopper::rcg::Matrix<Eigen::Dynamic, 1> ad_y_extra;
+    CppAD::ADFun<double> ad_fun_extra;
 
     State f;
     Eigen::Vector3d foot_pos;
     Eigen::Matrix<double, state_dims, state_dims, Eigen::RowMajor> df_dx;
     Eigen::Matrix<double, state_dims, action_dims, Eigen::RowMajor> df_du;
 
-    std::tuple<JointState, JointState> step() const;
-    [[nodiscard]] Vector3 prox(const Vector3& p) const;
+    inline std::tuple<JointState, JointState> step() const;
+    inline Vector3 prox(const Vector3& p) const;
 
-    Vector3 compute_foot_pos() const;
+    inline Vector3 compute_foot_pos() const;
+
+    inline void prepare_map();
 };
 
 #undef INPUT_DIMS

@@ -14,8 +14,8 @@ LQR::LQR(int horizon, double beta, int max_trial, Dynamics& dynamics, Cost& cost
           max_trial(max_trial),
           dynamics(dynamics),
           cost(cost),
-          x(horizon + 1, State::Zero()),
-          u(horizon, Action::Zero()),
+          x(horizon + 1, dynamics.params.x),
+          u(horizon, dynamics.params.u),
           a(horizon, A::Identity()),
           b(horizon, B::Zero()),
           q(horizon, Q::Zero()),
@@ -26,8 +26,6 @@ LQR::LQR(int horizon, double beta, int max_trial, Dynamics& dynamics, Cost& cost
 
     dynamics.build_map();
     cost.build_map();
-
-    x[0] = dynamics.params.x;
 }
 
 void LQR::action_rollout(std::vector<State>& x_, const std::vector<Action>& u_, int begin, int end) {
@@ -38,7 +36,7 @@ void LQR::action_rollout(std::vector<State>& x_, const std::vector<Action>& u_, 
         dynamics.params.x = x_[i];
         dynamics.params.u = u_[i];
 
-        dynamics.evaluate_foot_pos();
+        dynamics.evaluate_extra();
         dynamics.params.active = dynamics.get_foot_pos()(2) <= 0;
 
         dynamics.Base::evaluate();
@@ -64,45 +62,6 @@ void LQR::action_rollout(std::vector<State>& x_, const std::vector<Action>& u_, 
 void LQR::nominal_rollout() {
     action_rollout(x, u, 0, horizon);
 }
-
-/*
-void LQR::rollout() {
-    std::vector<State> x_(x);
-    std::vector<Action> u_(u);
-
-    for (int i = 0; i < horizon; ++i) {
-        // before updating the control, cache the original summed cost and its derivative
-        double c = cost_sum(i);
-        Action d = cost_sum_derivative(i, u_);
-
-        auto z = (ExtendedState() << x_[i] - x[i], 1.0).finished();
-        Action v = k[i] * z;
-
-        // backtracking
-        bool found = false;
-        for (int j = 0; j < max_trial; ++j) {
-            // rollout a trajectory with the updated control
-            u_[i] = u[i] + v;
-            action_rollout(x_, u_, i, horizon);
-
-            double c_ = cost_sum(i);
-            if (c_ < c - beta * d.dot(v)) {
-                found = true;
-                break;
-            }
-
-            v /= 10.0;
-        }
-        if (!found) {
-            u_[i] = u[i];
-            action_rollout(x_, u_, i, horizon);
-        }
-    }
-
-    std::swap(x, x_);
-    std::swap(u, u_);
-}
- */
 
 void LQR::rollout() {
     std::vector<State> x_(x);
