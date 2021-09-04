@@ -8,11 +8,11 @@
 #include "common.h"
 
 struct CostParams {
-    State x, x_prev, x_star;
-    Action u, u_prev;
+    State x, x_star;
+    Action u;
 };
 
-#define INPUT_DIMS  (3 * state_dims + 2 * action_dims)
+#define INPUT_DIMS  (state_dims + state_dims + action_dims)
 #define OUTPUT_DIMS 1
 
 struct Cost : public ADBase<CostParams, INPUT_DIMS, OUTPUT_DIMS> {
@@ -30,20 +30,13 @@ struct Cost : public ADBase<CostParams, INPUT_DIMS, OUTPUT_DIMS> {
     using State = Hopper::rcg::Matrix<state_dims, 1>;
 
     template<typename StateVector, typename ActionVector>
-    Cost(double alpha,
-         const Eigen::MatrixBase<StateVector>& scale_state,
+    Cost(const Eigen::MatrixBase<StateVector>& scale_state,
          const Eigen::MatrixBase<ActionVector>& scale_action)
-            : alpha(alpha),
-              scale_state(scale_state.template cast<Scalar>()),
+            : scale_state(scale_state.template cast<Scalar>()),
               scale_action(scale_action.template cast<Scalar>()),
               f(0) {
-        using Eigen::MatrixXd;
-
-        df_dxx = (1 - alpha) * scale_state.asDiagonal();
-        df_dxx += alpha * MatrixXd::Identity(state_dims, state_dims);
-
-        df_duu = (1 - alpha) * scale_action.asDiagonal();
-        df_duu += alpha * MatrixXd::Identity(action_dims, action_dims);
+        df_dxx = scale_state.asDiagonal();
+        df_duu = scale_action.asDiagonal();
     };
 
     void build_map() override;
@@ -56,12 +49,11 @@ struct Cost : public ADBase<CostParams, INPUT_DIMS, OUTPUT_DIMS> {
     [[nodiscard]] auto get_df_duu() const { return df_duu; }
 
 private:
-    const Scalar alpha;
     const Hopper::rcg::Matrix<state_dims, 1> scale_state;
     const Hopper::rcg::Matrix<action_dims, 1> scale_action;
 
-    State x, x_prev, x_star;
-    Action u, u_prev;
+    State x, x_star;
+    Action u;
 
     double f;
     Eigen::Matrix<double, 1, state_dims> df_dx;

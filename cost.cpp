@@ -8,9 +8,7 @@ Cost::Scalar Cost::cost() const {
     Scalar c = 0;
     c += 0.5 * (x - x_star).cwiseProduct(scale_state.cwiseSqrt()).squaredNorm();
     c += 0.5 * u.cwiseProduct(scale_action.cwiseSqrt()).squaredNorm();
-
-    Scalar d = 0.5 * (x - x_prev).squaredNorm() + 0.5 * (u - u_prev).squaredNorm();
-    return (1 - alpha) * c + alpha * d;
+    return c;
 }
 
 void Cost::build_map() {
@@ -19,9 +17,7 @@ void Cost::build_map() {
     Eigen::DenseIndex it = 0;
     ASSIGN_VECTOR(x, ad_x, it, state_dims)
     ASSIGN_VECTOR(u, ad_x, it, action_dims)
-    ASSIGN_VECTOR(x_prev, ad_x, it, state_dims)
     ASSIGN_VECTOR(x_star, ad_x, it, state_dims)
-    ASSIGN_VECTOR(u_prev, ad_x, it, action_dims)
 
     ad_y(0) = cost();
     ad_fun.Dependent(ad_x, ad_y);
@@ -35,7 +31,7 @@ void Cost::evaluate(const Params& params, EvalOption option) {
     Eigen::VectorXd x0(input_dims);
     Eigen::VectorXd y(output_dims);
 
-    x0 << params.x, params.u, params.x_prev, params.x_star, params.u_prev;
+    x0 << params.x, params.u, params.x_star;
     y = ad_fun.Forward(0, x0);
     f = y(0);
 

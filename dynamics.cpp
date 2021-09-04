@@ -94,9 +94,9 @@ void Dynamics::evaluate(const Params& params, EvalOption option) {
     if (option == EvalOption::FIRST_ORDER) {
         JACOBIAN_VIEW(jac) = ad_fun.Jacobian(x);
         it = 0;
-        Jacobian jac_ = jac.topRows<state_dims>();
-        ASSIGN_COLS(df_dx, jac_, it, state_dims)
-        ASSIGN_COLS(df_du, jac_, it, action_dims)
+        jac = jac.topRows<state_dims>();
+        ASSIGN_COLS(df_dx, jac, it, state_dims)
+        ASSIGN_COLS(df_du, jac, it, action_dims)
     }
 }
 

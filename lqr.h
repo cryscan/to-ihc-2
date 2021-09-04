@@ -27,29 +27,19 @@ struct LQR {
 
     LQR(int horizon, double beta, int max_trial, Dynamics& dynamics, Cost& cost);
 
-    // generates a trajectory using the u provided and stores it into x
-    // it also calculates derivatives
-    void action_rollout(std::vector<State>& x_, const std::vector<Action>& u_, int begin, int end);
-    void nominal_rollout();
+    void init(const std::vector<State>& x, const std::vector<Action>& u);
+    void init_linear_interpolation();
 
-    // generates x and u using LQR feedback control and line search
-    void rollout();
-    void solve();
+    void iterate();
 
     // computes the overall cost starting from the time index
     // assuming that the rollout has been updated
-    [[nodiscard]] double cost_sum(int index) const;
-
-    // computes the derivative of the overall cost w.r.t. the current action
-    // at the time index and the action sequence u_
-    // assuming that the rollout has been updated
-    [[nodiscard]] Action cost_sum_derivative(int index, const std::vector<Action>& u_) const;
+    [[nodiscard]] double total_cost() const;
+    [[nodiscard]] double total_defect() const;
 
     void print(std::ostream& os) const;
 
     const int horizon;
-    const double beta;
-    const int max_trial;
 
 private:
     std::vector<State> x;
@@ -64,6 +54,10 @@ private:
 
     Dynamics& dynamics;
     Cost& cost;
+
+    inline void linearize();
+    inline void solve();
+    inline void update();
 };
 
 #endif //TO_IHC_2_LQR_H

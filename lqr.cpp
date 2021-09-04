@@ -10,8 +10,6 @@
 
 LQR::LQR(int horizon, double beta, int max_trial, Dynamics& dynamics, Cost& cost)
         : horizon(horizon),
-          beta(beta),
-          max_trial(max_trial),
           dynamics(dynamics),
           cost(cost),
           x(horizon + 1, dynamics.params.x),
@@ -22,61 +20,45 @@ LQR::LQR(int horizon, double beta, int max_trial, Dynamics& dynamics, Cost& cost
           r(horizon, R::Zero()),
           p(horizon + 1, P::Zero()),
           k(horizon, K::Zero()) {
-    assert(horizon > 0);
-
     dynamics.build_map();
     cost.build_map();
 }
 
-void LQR::action_rollout(std::vector<State>& x_, const std::vector<Action>& u_, int begin, int end) {
-    assert(begin >= 0);
-    assert(end <= horizon);
+void LQR::init(const std::vector<State>& x_, const std::vector<Action>& u_) {
+    std::copy(x_.begin(), x_.end(), x.begin());
+    std::copy(u_.begin(), u_.end(), u.begin());
+}
 
-    for (int i = begin; i < end; ++i) {
-        dynamics.params.x = x_[i];
-        dynamics.params.u = u_[i];
+void LQR::init_linear_interpolation() {
+    State dx = cost.params.x_star - x[0];
+    for (int i = 0; i < horizon; ++i)
+        x[i + 1] = x[i] + dx / horizon;
+}
+
+void LQR::linearize() {
+    for (int i = 0; i < horizon; ++i) {
+        dynamics.params.x = x[i];
+        dynamics.params.u = u[i];
 
         dynamics.evaluate_extra();
         dynamics.params.active = dynamics.get_foot_pos()(2) <= 0;
 
         dynamics.Base::evaluate();
-        x_[i + 1] = dynamics.get_f();
 
         // linearize the system around the new trajectory
         a[i].topLeftCorner<state_dims, state_dims>() = dynamics.get_df_dx();
+        a[i].topRightCorner<state_dims, 1>() = dynamics.get_f() - x[i + 1];
         b[i].topRows<state_dims>() = dynamics.get_df_du();
 
         // quadratically approximate the cost
-        cost.params.x = x_[i];
-        cost.params.u = u_[i];
-        cost.params.x_prev = x[i];
-        cost.params.u_prev = u[i];
+        cost.params.x = x[i];
+        cost.params.u = u[i];
         cost.Base::evaluate();
 
         q[i] << cost.get_df_dxx(), cost.get_df_dx().transpose(),
                 cost.get_df_dx(), cost.get_f();
         r[i] = cost.get_df_duu();
     }
-}
-
-void LQR::nominal_rollout() {
-    action_rollout(x, u, 0, horizon);
-}
-
-void LQR::rollout() {
-    std::vector<State> x_(x);
-    std::vector<Action> u_(u);
-
-    for (int i = 0; i < horizon; ++i) {
-        auto z = (ExtendedState() << x_[i] - x[i], 1.0).finished();
-        Action v = k[i] * z;
-        u_[i] = u[i] + v;
-
-        action_rollout(x_, u_, i, i + 1);
-    }
-
-    std::swap(x, x_);
-    std::swap(u, u_);
 }
 
 void LQR::solve() {
@@ -90,30 +72,41 @@ void LQR::solve() {
     }
 }
 
-double LQR::cost_sum(int index) const {
-    assert(index >= 0);
-    assert(index < horizon);
+void LQR::update() {
+    std::vector<State> x_(x);
+    std::vector<Action> u_(u);
 
-    double c = 0;
-    for (int i = index; i < horizon; ++i) {
-        c += q[i].bottomRightCorner<1, 1>()(0);
+    for (int i = 0; i < horizon; ++i) {
+        ExtendedState z;
+        z << x_[i] - x[i], 1.0;
+
+        u_[i] += k[i] * z;
+
+        ExtendedState dx = (a[i] + b[i] * k[i]) * z;
+        x_[i + 1] += dx.head<state_dims>();
     }
+
+    x.swap(x_);
+    u.swap(u_);
+}
+
+void LQR::iterate() {
+    linearize();
+    solve();
+    update();
+}
+
+double LQR::total_cost() const {
+    double c = 0;
+    for (int i = 0; i < horizon; ++i)
+        c += q[i].bottomRightCorner<1, 1>()(0);
     return c;
 }
 
-Action LQR::cost_sum_derivative(int index, const std::vector<Action>& u_) const {
-    assert(index >= 0);
-    assert(index < horizon);
-
-    Action d = r[index] * u_[index];
-    Eigen::Matrix<double, state_dims, action_dims> head = b[index].topRows<state_dims>();
-
-    // accumulates the derivatives throughout the time-steps
-    for (int i = index; i < horizon; ++i) {
-        if (i > index) head = a[i].topLeftCorner<state_dims, state_dims>() * head;
-        d += head.transpose() * q[i].topRightCorner<state_dims, 1>();
-    }
-
+double LQR::total_defect() const {
+    double d = 0;
+    for (int i = 0; i < horizon; ++i)
+        d += a[i].topRightCorner<state_dims, 1>().squaredNorm();
     return d;
 }
 
