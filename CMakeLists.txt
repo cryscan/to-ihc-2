@@ -3,9 +3,9 @@ project(to_ihc_2)
 
 set(CMAKE_CXX_STANDARD 20)
 
-set(EXECUTEBLE_NAME control)
+find_package(OpenMP REQUIRED)
 
 add_subdirectory(hopper)
 
 add_executable(control main.cpp dynamics.cpp cost.cpp lqr.cpp)
-target_link_libraries(control hopper)
+target_link_libraries(control hopper OpenMP::OpenMP_CXX)

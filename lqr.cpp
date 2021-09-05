@@ -3,13 +3,15 @@
 //
 
 #include <cassert>
+#include <limits>
 
 #include "lqr.h"
 #include "dynamics.h"
 #include "cost.h"
 
-LQR::LQR(int horizon, double beta, int max_trial, Dynamics& dynamics, Cost& cost)
+LQR::LQR(int horizon, std::vector<double> steps, Dynamics& dynamics, Cost& cost)
         : horizon(horizon),
+          steps(std::move(steps)),
           dynamics(dynamics),
           cost(cost),
           x(horizon + 1, dynamics.params.x),
@@ -72,6 +74,7 @@ void LQR::solve() {
     }
 }
 
+/*
 void LQR::update() {
     std::vector<State> x_(x);
     std::vector<Action> u_(u);
@@ -89,6 +92,65 @@ void LQR::update() {
     x.swap(x_);
     u.swap(u_);
 }
+ */
+
+void LQR::update() {
+    std::vector<State> x_(x);
+    std::vector<Action> u_(u);
+
+    std::vector<State> dx(horizon + 1, State::Zero());
+    std::vector<Action> du(horizon, Action::Zero());
+
+    double min_cost = std::numeric_limits<double>::max();
+
+    for (int i = 0; i < horizon; ++i) {
+        ExtendedState z;
+        z << dx[i], 1.0;
+
+        du[i] = k[i] * z;
+
+        ExtendedState dz = (a[i] + b[i] * k[i]) * z;
+        dx[i + 1] = dz.head<state_dims>();
+    }
+
+#pragma omp parallel default(none) shared(min_cost, steps, x_, u_, dx, du)
+    {
+        // std::vector<State> local_x(horizon);
+        // std::vector<Action> local_u(horizon);
+        CostParams params = cost.params;
+
+        double local_cost = 0;
+
+#pragma omp for
+        for (double alpha: steps) {
+            for (int i = 0; i < horizon; ++i) {
+                params.x = x[i] + alpha * dx[i];
+                params.u = u[i] + alpha * du[i];
+                local_cost += generic_cost<double>(params.x,
+                                                   params.x_star,
+                                                   params.u,
+                                                   cost.scale_state,
+                                                   cost.scale_action);
+            }
+
+#pragma omp critical
+            {
+                if (local_cost < min_cost) {
+                    min_cost = local_cost;
+                    for (int i = 0; i < horizon; ++i) {
+                        x_[i] = x[i] + alpha * dx[i];
+                        u_[i] = u[i] + alpha * du[i];
+                    }
+                }
+            }
+        }
+
+    }
+
+    x.swap(x_);
+    u.swap(u_);
+}
+
 
 void LQR::iterate() {
     linearize();

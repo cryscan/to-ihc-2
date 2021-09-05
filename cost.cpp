@@ -5,10 +5,7 @@
 #include "cost.h"
 
 Cost::Scalar Cost::cost() const {
-    Scalar c = 0;
-    c += 0.5 * (x - x_star).cwiseProduct(scale_state.cwiseSqrt()).squaredNorm();
-    c += 0.5 * u.cwiseProduct(scale_action.cwiseSqrt()).squaredNorm();
-    return c;
+    return generic_cost<Scalar>(x, x_star, u, ad_scale_state, ad_scale_action);
 }
 
 void Cost::build_map() {

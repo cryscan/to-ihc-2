@@ -25,7 +25,7 @@ struct LQR {
 
     using ExtendedState = Eigen::Matrix<double, ext_state_dims, 1>;
 
-    LQR(int horizon, double beta, int max_trial, Dynamics& dynamics, Cost& cost);
+    LQR(int horizon, std::vector<double> steps, Dynamics& dynamics, Cost& cost);
 
     void init(const std::vector<State>& x, const std::vector<Action>& u);
     void init_linear_interpolation();
@@ -40,6 +40,7 @@ struct LQR {
     void print(std::ostream& os) const;
 
     const int horizon;
+    const std::vector<double> steps;
 
 private:
     std::vector<State> x;
@@ -55,9 +56,9 @@ private:
     Dynamics& dynamics;
     Cost& cost;
 
-    inline void linearize();
-    inline void solve();
-    inline void update();
+    void linearize();
+    void solve();
+    void update();
 };
 
 #endif //TO_IHC_2_LQR_H
