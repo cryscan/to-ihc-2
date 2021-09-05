@@ -29,7 +29,7 @@ int main() {
     for (int i = 0; i < cost.params.x_star.size(); ++i)
         is >> cost.params.x_star(i);
 
-    LQR lqr(horizon, {1.0, 0.5, 0.25, 0.125, 0.05, 0.01}, dynamics, cost);
+    LQR lqr(horizon, {1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125}, dynamics, cost);
     lqr.init_linear_interpolation();
 
     {

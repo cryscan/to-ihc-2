@@ -36,6 +36,10 @@ struct ADBase {
     static constexpr int input_dims = InputDims;
     static constexpr int output_dims = OutputDims;
 
+    ADBase() = default;
+    ADBase(const ADBase& other) : params(other.params) {}
+    ADBase& operator=(const ADBase& other) { params = other.params; }
+
     virtual void build_map() {};
 
     void evaluate(EvalOption option = EvalOption::FIRST_ORDER) { this->evaluate(params, option); }

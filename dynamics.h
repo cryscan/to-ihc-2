@@ -34,14 +34,14 @@ struct Dynamics : public ADBase<DynamicsParams, INPUT_DIMS, OUTPUT_DIMS> {
     using Matrix3 = Hopper::rcg::Matrix<3, 3>;
     using Affine3 = Eigen::Transform<Scalar, 3, Eigen::Affine>;
 
-    Dynamics(int num_iters, double dt, double mu, double torque_limit)
-            : inverse_dynamics(inertia_properties, motion_transforms),
-              jsim(inertia_properties, force_transforms),
-              num_iters(num_iters),
-              dt(dt),
-              mu(mu),
-              torque_limit(torque_limit),
-              ad_torque_limit(torque_limit) {}
+    Dynamics(int num_iters, double dt, double mu, double torque_limit) :
+            inverse_dynamics(inertia_properties, motion_transforms),
+            jsim(inertia_properties, force_transforms),
+            num_iters(num_iters),
+            dt(dt),
+            mu(mu),
+            torque_limit(torque_limit),
+            ad_torque_limit(torque_limit) {}
 
     void build_map() override;
     void evaluate(const Params& params, EvalOption option) override;

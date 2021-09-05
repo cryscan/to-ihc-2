@@ -31,14 +31,22 @@ struct Cost : public ADBase<CostParams, INPUT_DIMS, OUTPUT_DIMS> {
 
     template<typename StateVector, typename ActionVector>
     Cost(const Eigen::MatrixBase<StateVector>& scale_state,
-         const Eigen::MatrixBase<ActionVector>& scale_action)
-            :scale_state(scale_state),
-             scale_action(scale_action),
-             ad_scale_state(scale_state.template cast<Scalar>()),
-             ad_scale_action(scale_action.template cast<Scalar>()),
-             f(0),
-             df_dxx(scale_state.asDiagonal()),
-             df_duu(scale_action.asDiagonal()) {};
+         const Eigen::MatrixBase<ActionVector>& scale_action) :
+            scale_state(scale_state.template cast<Scalar>()),
+            scale_action(scale_action.template cast<Scalar>()),
+            f(0),
+            df_dxx(scale_state.asDiagonal()),
+            df_duu(scale_action.asDiagonal()) {};
+
+    /*
+    Cost(const Cost& other) :
+            Base(other),
+            scale_state(other.scale_state),
+            scale_action(other.scale_action),
+            f(other.f),
+            df_dxx(other.df_dxx),
+            df_duu(other.df_duu) {}
+            */
 
     void build_map() override;
     void evaluate(const Params& params, EvalOption option) override;
@@ -49,12 +57,12 @@ struct Cost : public ADBase<CostParams, INPUT_DIMS, OUTPUT_DIMS> {
     [[nodiscard]] auto get_df_dxx() const { return df_dxx; }
     [[nodiscard]] auto get_df_duu() const { return df_duu; }
 
-    const Eigen::Matrix<double, state_dims, 1> scale_state;
-    const Eigen::Matrix<double, action_dims, 1> scale_action;
+    // const Eigen::Matrix<double, state_dims, 1> scale_state;
+    // const Eigen::Matrix<double, action_dims, 1> scale_action;
 
 private:
-    const Hopper::rcg::Matrix<state_dims, 1> ad_scale_state;
-    const Hopper::rcg::Matrix<action_dims, 1> ad_scale_action;
+    const Hopper::rcg::Matrix<state_dims, 1> scale_state;
+    const Hopper::rcg::Matrix<action_dims, 1> scale_action;
 
     State x, x_star;
     Action u;
@@ -67,18 +75,6 @@ private:
 
     [[nodiscard]] Scalar cost() const;
 };
-
-template<typename Scalar, typename StateVector, typename ActionVector>
-Scalar generic_cost(const Eigen::MatrixBase<StateVector>& x,
-                    const Eigen::MatrixBase<StateVector>& x_star,
-                    const Eigen::MatrixBase<ActionVector>& u,
-                    const Eigen::MatrixBase<StateVector>& scale_state,
-                    const Eigen::MatrixBase<ActionVector>& scale_action) {
-    Scalar c = 0;
-    c += 0.5 * (x - x_star).cwiseProduct(scale_state.cwiseSqrt()).squaredNorm();
-    c += 0.5 * u.cwiseProduct(scale_action.cwiseSqrt()).squaredNorm();
-    return c;
-}
 
 #undef INPUT_DIMS
 #undef OUTPUT_DIMS

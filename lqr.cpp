@@ -4,10 +4,19 @@
 
 #include <cassert>
 #include <limits>
+#include <omp.h>
 
 #include "lqr.h"
 #include "dynamics.h"
 #include "cost.h"
+
+namespace {
+    using CppAD::thread_alloc;
+
+    bool in_parallel() { return omp_in_parallel() != 0; }
+
+    size_t thread_num() { return static_cast<size_t>(omp_get_thread_num()); }
+}
 
 LQR::LQR(int horizon, std::vector<double> steps, Dynamics& dynamics, Cost& cost)
         : horizon(horizon),
@@ -24,6 +33,10 @@ LQR::LQR(int horizon, std::vector<double> steps, Dynamics& dynamics, Cost& cost)
           k(horizon, K::Zero()) {
     dynamics.build_map();
     cost.build_map();
+
+    thread_alloc::parallel_setup(omp_get_max_threads(), in_parallel, thread_num);
+    thread_alloc::hold_memory(true);
+    CppAD::parallel_ad<double>();
 }
 
 void LQR::init(const std::vector<State>& x_, const std::vector<Action>& u_) {
@@ -115,22 +128,18 @@ void LQR::update() {
 
 #pragma omp parallel default(none) shared(min_cost, steps, x_, u_, dx, du)
     {
-        // std::vector<State> local_x(horizon);
-        // std::vector<Action> local_u(horizon);
-        CostParams params = cost.params;
-
-        double local_cost = 0;
+        Cost cost_(cost);
+        cost_.build_map();
 
 #pragma omp for
         for (double alpha: steps) {
+            double local_cost = 0;
+
             for (int i = 0; i < horizon; ++i) {
-                params.x = x[i] + alpha * dx[i];
-                params.u = u[i] + alpha * du[i];
-                local_cost += generic_cost<double>(params.x,
-                                                   params.x_star,
-                                                   params.u,
-                                                   cost.scale_state,
-                                                   cost.scale_action);
+                cost_.params.x = x[i] + alpha * dx[i];
+                cost_.params.u = u[i] + alpha * du[i];
+                cost_.Base::evaluate(EvalOption::ZERO_ORDER);
+                local_cost += cost_.get_f();
             }
 
 #pragma omp critical
@@ -144,7 +153,6 @@ void LQR::update() {
                 }
             }
         }
-
     }
 
     x.swap(x_);
