@@ -38,16 +38,6 @@ struct Cost : public ADBase<CostParams, INPUT_DIMS, OUTPUT_DIMS> {
             df_dxx(scale_state.asDiagonal()),
             df_duu(scale_action.asDiagonal()) {};
 
-    /*
-    Cost(const Cost& other) :
-            Base(other),
-            scale_state(other.scale_state),
-            scale_action(other.scale_action),
-            f(other.f),
-            df_dxx(other.df_dxx),
-            df_duu(other.df_duu) {}
-            */
-
     void build_map() override;
     void evaluate(const Params& params, EvalOption option) override;
 

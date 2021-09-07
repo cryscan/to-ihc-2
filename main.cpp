@@ -10,8 +10,11 @@ using namespace Hopper;
 int main() {
     std::fstream is("in.txt", std::ios::in);
 
-    int horizon, num_iters;
-    is >> horizon >> num_iters;
+    int horizon, interval, num_iters;
+    is >> horizon >> interval >> num_iters;
+
+    double defect_limit;
+    is >> defect_limit;
 
     Dynamics dynamics(50, 0.01, 1, 60);
     for (int i = 0; i < dynamics.params.x.size(); ++i)
@@ -29,7 +32,7 @@ int main() {
     for (int i = 0; i < cost.params.x_star.size(); ++i)
         is >> cost.params.x_star(i);
 
-    LQR lqr(horizon, {1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125}, dynamics, cost);
+    LQR lqr(horizon, interval, {1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125}, dynamics, cost);
     lqr.init_linear_interpolation();
 
     {
@@ -45,8 +48,10 @@ int main() {
         std::cout << "iter " << i << ":\t"
                   << lqr.total_cost() << '\t' << lqr.total_defect() << std::endl;
 
-        std::fstream os("out.txt", std::ios::out | std::ios::trunc);
-        lqr.print(os);
+        if (lqr.total_defect() < defect_limit) {
+            std::fstream os("out.txt", std::ios::out | std::ios::trunc);
+            lqr.print(os);
+        }
     }
 
     return 0;

@@ -6,6 +6,25 @@
 
 using namespace Hopper;
 
+Dynamics::Dynamics(int num_iters, double dt, double mu, double torque_limit) :
+        inverse_dynamics(inertia_properties, motion_transforms),
+        jsim(inertia_properties, force_transforms),
+        num_iters(num_iters),
+        dt(dt),
+        mu(mu),
+        torque_limit(torque_limit),
+        ad_torque_limit(torque_limit) {}
+
+Dynamics::Dynamics(const Dynamics& other) :
+        Base(other),
+        inverse_dynamics(other.inverse_dynamics),
+        jsim(other.jsim),
+        num_iters(other.num_iters),
+        dt(other.dt),
+        mu(other.mu),
+        torque_limit(other.torque_limit),
+        ad_torque_limit(other.torque_limit) {}
+
 std::tuple<Dynamics::JointState, Dynamics::JointState> Dynamics::step() const {
     using ContactJacobian = Hopper::rcg::Matrix<3, joint_space_dims>;
     using ContactJacobianTranspose = Hopper::rcg::Matrix<joint_space_dims, 3>;
