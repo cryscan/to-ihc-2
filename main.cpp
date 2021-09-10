@@ -32,7 +32,7 @@ int main() {
     for (int i = 0; i < cost.params.x_star.size(); ++i)
         is >> cost.params.x_star(i);
 
-    LQR lqr(horizon, interval, {1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125}, dynamics, cost);
+    LQR lqr(horizon, interval, {1.0, 0.5, 0.25, 0.125}, 4, dynamics, cost);
     lqr.init_linear_interpolation();
 
     {
@@ -46,9 +46,11 @@ int main() {
         lqr.iterate();
 
         std::cout << "iter " << i << ":\t"
-                  << lqr.total_cost() << '\t' << lqr.total_defect() << std::endl;
+                  << lqr.total_cost() << '\t'
+                  << lqr.total_defect() << '\t'
+                  << lqr.get_decrease_ratio() << std::endl;
 
-        if (lqr.total_defect() < defect_limit) {
+        if (defect_limit < 0.0 || lqr.total_defect() < defect_limit) {
             std::fstream os("out.txt", std::ios::out | std::ios::trunc);
             lqr.print(os);
         }

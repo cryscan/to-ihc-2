@@ -20,10 +20,16 @@ namespace {
     const size_t num_threads = omp_get_max_threads();
 }
 
-LQR::LQR(int horizon, int interval, std::vector<double> steps, const Dynamics& dynamics, const Cost& cost) :
+LQR::LQR(int horizon,
+         int interval,
+         std::vector<double> line_search_steps,
+         int max_line_search_trails,
+         const Dynamics& dynamics,
+         const Cost& cost) :
         horizon(horizon),
         interval(interval),
-        steps(std::move(steps)),
+        line_search_steps(std::move(line_search_steps)),
+        max_line_search_trails(max_line_search_trails),
         vec_dynamics(num_threads, dynamics),
         vec_cost(num_threads, cost),
         x(horizon + 1, dynamics.params.x),
@@ -36,7 +42,8 @@ LQR::LQR(int horizon, int interval, std::vector<double> steps, const Dynamics& d
         k(horizon, K::Zero()),
         dv(horizon),
         mu(0),
-        delta(0) {
+        delta(0),
+        decrease_ratio(0) {
     thread_alloc::parallel_setup(omp_get_max_threads(), in_parallel, thread_num);
     thread_alloc::hold_memory(true);
     CppAD::parallel_ad<double>();
@@ -140,61 +147,76 @@ void LQR::update() {
     double last_cost = total_cost();
     double min_cost = std::numeric_limits<double>::max();
 
-#pragma omp parallel for default(none) firstprivate(x_, u_, dx, du) shared(last_cost, min_cost, steps, x_hat, u_hat)
-    for (double alpha: steps) {
-        size_t id = thread_num();
+    bool ok = false;
+    int trails = 0;
+    auto steps = line_search_steps;
 
-        auto& cost = vec_cost[id];
-        auto& dynamics = vec_dynamics[id];
+    do {
+#pragma omp parallel for default(none) firstprivate(x_, u_, dx, du) shared(last_cost, min_cost, steps, x_hat, u_hat, ok)
+        for (double alpha: steps) {
+            size_t id = thread_num();
 
-        double local_cost = 0;
-        double expected = 0;
+            auto& cost = vec_cost[id];
+            auto& dynamics = vec_dynamics[id];
 
-        for (int i = 0; i < horizon; ++i) {
-            ExtendedState z;
-            z << dx[i], 1.0;
+            double local_cost = 0;
+            double expected = 0;
 
-            K k_ = k[i];
-            k_.rightCols<1>() *= alpha;
-            du[i] = k_ * z;
+            for (int i = 0; i < horizon; ++i) {
+                ExtendedState z;
+                z << dx[i], 1.0;
 
-            ExtendedState dz = (a[i] + b[i] * k_) * z;
-            dx[i + 1] = dz.head<state_dims>();
+                K k_ = k[i];
+                k_.rightCols<1>() *= alpha;
+                du[i] = k_ * z;
 
-            expected += alpha * (dv[i](0) + alpha * dv[i](1));
-        }
+                ExtendedState dz = (a[i] + b[i] * k_) * z;
+                dx[i + 1] = dz.head<state_dims>();
 
-        for (int i = 0; i < horizon; ++i) {
-            u_[i] = u[i] + du[i];
-            if (i % interval != 0) {
-                // override
-                dynamics.params.x = x_[i - 1];
-                dynamics.params.u = u_[i - 1];
+                expected += alpha * (dv[i](0) + alpha * dv[i](1));
+            }
 
-                dynamics.evaluate_extra();
-                dynamics.params.active = dynamics.get_foot_pos().z() <= 0;
+            for (int i = 0; i < horizon; ++i) {
+                u_[i] = u[i] + du[i];
+                if (i % interval != 0) {
+                    // override
+                    dynamics.params.x = x_[i - 1];
+                    dynamics.params.u = u_[i - 1];
 
-                dynamics.Base::evaluate(EvalOption::ZERO_ORDER);
-                x_[i] = dynamics.get_f();
-            } else
-                x_[i] = x[i] + dx[i];
+                    dynamics.evaluate_extra();
+                    dynamics.params.active = dynamics.get_foot_pos().z() <= 0;
 
-            cost.params.x = x_[i];
-            cost.params.u = u_[i];
-            cost.Base::evaluate(EvalOption::ZERO_ORDER);
-            local_cost += cost.get_f();
-        }
+                    dynamics.Base::evaluate(EvalOption::ZERO_ORDER);
+                    x_[i] = dynamics.get_f();
+                } else
+                    x_[i] = x[i] + dx[i];
+
+                cost.params.x = x_[i];
+                cost.params.u = u_[i];
+                cost.Base::evaluate(EvalOption::ZERO_ORDER);
+                local_cost += cost.get_f();
+            }
 
 #pragma omp critical
-        {
-            double z = (local_cost - last_cost) / expected;
-            if (local_cost < min_cost) {
-                min_cost = local_cost;
-                x_hat.swap(x_);
-                u_hat.swap(u_);
+            {
+                if (local_cost < min_cost) {
+                    min_cost = local_cost;
+                    x_hat.swap(x_);
+                    u_hat.swap(u_);
+
+                    decrease_ratio = (local_cost - last_cost) / expected;
+                    if (decrease_ratio > 0.0001)
+                        ok = true;
+                }
             }
         }
-    }
+
+        if (!ok) {
+            std::transform(steps.begin(), steps.end(), steps.begin(),
+                           [](auto alpha) { return alpha / 16; });
+            trails++;
+        }
+    } while (!(ok || trails >= max_line_search_trails));
 
     x.swap(x_hat);
     u.swap(u_hat);
@@ -218,6 +240,10 @@ double LQR::total_defect() const {
     for (int i = 0; i < horizon; ++i)
         d += a[i].topRightCorner<state_dims, 1>().squaredNorm();
     return d;
+}
+
+double LQR::get_decrease_ratio() const {
+    return decrease_ratio;
 }
 
 void LQR::print(std::ostream& os) const {
