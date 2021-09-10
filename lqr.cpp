@@ -20,18 +20,15 @@ namespace {
     const size_t num_threads = omp_get_max_threads();
 }
 
-LQR::LQR(int horizon,
-         int interval,
-         std::vector<double> line_search_steps,
-         int max_line_search_trails,
-         const Dynamics& dynamics,
-         const Cost& cost) :
+LQR::LQR(int horizon, int interval, std::vector<double> line_search_steps, int max_line_search_trails,
+         const Dynamics& dynamics, const Cost& cost, const Cost& cost_final) :
         horizon(horizon),
         interval(interval),
         line_search_steps(std::move(line_search_steps)),
         max_line_search_trails(max_line_search_trails),
         vec_dynamics(num_threads, dynamics),
         vec_cost(num_threads, cost),
+        vec_cost_final(num_threads, cost_final),
         x(horizon + 1, dynamics.params.x),
         u(horizon, dynamics.params.u),
         a(horizon, A::Identity()),
@@ -50,6 +47,7 @@ LQR::LQR(int horizon,
 
     for (auto& fun: vec_dynamics) fun.build_map();
     for (auto& fun: vec_cost) fun.build_map();
+    for (auto& fun: vec_cost_final) fun.build_map();
 }
 
 void LQR::init(const std::vector<State>& x_, const std::vector<Action>& u_) {
@@ -90,6 +88,13 @@ void LQR::linearize() {
         q[i] << cost.get_df_dxx(), cost.get_df_dx().transpose(),
                 cost.get_df_dx(), cost.get_f();
         r[i] = cost.get_df_duu();
+    }
+    {
+        auto& cost = vec_cost_final[0];
+        cost.params.x = x[horizon];
+        cost.params.u = Action::Zero();
+        cost.Base::evaluate();
+        p[horizon] << cost.get_df_dxx(), cost.get_df_dx().transpose(), cost.get_df_dx(), cost.get_f();
     }
 }
 
@@ -156,8 +161,9 @@ void LQR::update() {
         for (double alpha: steps) {
             size_t id = thread_num();
 
-            auto& cost = vec_cost[id];
             auto& dynamics = vec_dynamics[id];
+            auto& cost = vec_cost[id];
+            auto& cost_final = vec_cost_final[id];
 
             double local_cost = 0;
             double expected = 0;
@@ -207,6 +213,12 @@ void LQR::update() {
                 cost.Base::evaluate(EvalOption::ZERO_ORDER);
                 local_cost += cost.get_f();
             }
+            {
+                cost_final.params.x = x_[horizon];
+                cost_final.params.u = Action::Zero();
+                cost_final.Base::evaluate(EvalOption::ZERO_ORDER);
+                local_cost += cost_final.get_f();
+            }
 
 #pragma omp critical
             {
@@ -249,6 +261,7 @@ double LQR::total_cost() const {
     double c = 0;
     for (int i = 0; i < horizon; ++i)
         c += q[i].bottomRightCorner<1, 1>()(0);
+    c += p[horizon].bottomRightCorner<1, 1>()(0);
     return c;
 }
 

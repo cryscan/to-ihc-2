@@ -27,12 +27,8 @@ struct LQR {
     using P = Eigen::Matrix<double, ext_state_dims, ext_state_dims>;
     using K = Eigen::Matrix<double, action_dims, ext_state_dims>;
 
-    LQR(int horizon,
-        int interval,
-        std::vector<double> line_search_steps,
-        int max_line_search_trails,
-        const Dynamics& dynamics,
-        const Cost& cost);
+    LQR(int horizon, int interval, std::vector<double> line_search_steps, int max_line_search_trails,
+        const Dynamics& dynamics, const Cost& cost, const Cost& cost_final);
 
     void init(const std::vector<State>& x, const std::vector<Action>& u);
     void init_linear_interpolation();
@@ -73,6 +69,7 @@ private:
 
     std::vector<Dynamics> vec_dynamics;
     std::vector<Cost> vec_cost;
+    std::vector<Cost> vec_cost_final;
 
     void linearize();
     void solve();

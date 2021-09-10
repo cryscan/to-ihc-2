@@ -7,6 +7,20 @@
 
 using namespace Hopper;
 
+Cost make_cost(std::istream& is, const State& x_star) {
+    Eigen::VectorXd scale_state(8);
+    for (int i = 0; i < scale_state.size(); ++i)
+        is >> scale_state(i);
+
+    Eigen::Vector2d scale_action;
+    is >> scale_action(0) >> scale_action(1);
+
+    Cost cost(scale_state, scale_action);
+    cost.params.x_star = x_star;
+
+    return cost;
+}
+
 int main() {
     std::fstream is("in.txt", std::ios::in);
 
@@ -21,18 +35,14 @@ int main() {
         is >> dynamics.params.x(i);
     is >> dynamics.params.u(0) >> dynamics.params.u(1);
 
-    Eigen::VectorXd scale_state(8);
-    for (int i = 0; i < scale_state.size(); ++i)
-        is >> scale_state(i);
+    State x_star;
+    for (int i = 0; i < x_star.size(); ++i)
+        is >> x_star(i);
 
-    Eigen::Vector2d scale_action;
-    is >> scale_action(0) >> scale_action(1);
+    Cost cost = make_cost(is, x_star);
+    Cost cost_final = make_cost(is, x_star);
 
-    Cost cost(scale_state, scale_action);
-    for (int i = 0; i < cost.params.x_star.size(); ++i)
-        is >> cost.params.x_star(i);
-
-    LQR lqr(horizon, interval, {1.0, 0.5, 0.25, 0.125}, 4, dynamics, cost);
+    LQR lqr(horizon, interval, {1.0, 0.5, 0.25, 0.125}, 4, dynamics, cost, cost_final);
     lqr.init_linear_interpolation();
 
     {

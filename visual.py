@@ -8,11 +8,11 @@ for line in file.readlines():
     state = [float(x) for x in line.split()]
     states.append(state)
 
-dt = 0.1
+dt = 0.01
 L = 0.3
 
-fig = plt.figure(figsize=(10, 4))
-ax = fig.add_subplot(autoscale_on=False, xlim=(-2., 2.), ylim=(-1., 1.))
+fig = plt.figure(figsize=(10, 8))
+ax = fig.add_subplot(autoscale_on=False, xlim=(-2., 2.), ylim=(-1., 3.))
 ax.set_aspect('equal')
 ax.grid()
 
@@ -40,5 +40,5 @@ def animate(i):
 
 
 ani = animation.FuncAnimation(fig, animate, len(states), interval=dt * 1000, blit=True)
-ani.save("animation.mp4")
+# ani.save("animation.mp4")
 plt.show()
