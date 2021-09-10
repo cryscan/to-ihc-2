@@ -8,7 +8,7 @@ for line in file.readlines():
     state = [float(x) for x in line.split()]
     states.append(state)
 
-dt = 0.01
+dt = 0.1
 L = 0.3
 
 fig = plt.figure(figsize=(10, 4))
@@ -40,4 +40,5 @@ def animate(i):
 
 
 ani = animation.FuncAnimation(fig, animate, len(states), interval=dt * 1000, blit=True)
+ani.save("animation.mp4")
 plt.show()

@@ -77,6 +77,9 @@ private:
     void linearize();
     void solve();
     void update();
+
+    // returns the feedback control matrix at step i.
+    [[nodiscard]] inline K feedback(int i, double alpha) const;
 };
 
 #endif //TO_IHC_2_LQR_H

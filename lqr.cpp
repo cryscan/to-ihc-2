@@ -166,31 +166,42 @@ void LQR::update() {
                 ExtendedState z;
                 z << dx[i], 1.0;
 
-                K k_ = k[i];
-                k_.rightCols<1>() *= alpha;
-                du[i] = k_ * z;
+                K l = feedback(i, alpha);
+                du[i] = l * z;
 
-                ExtendedState dz = (a[i] + b[i] * k_) * z;
+                ExtendedState dz = (a[i] + b[i] * l) * z;
                 dx[i + 1] = dz.head<state_dims>();
 
                 expected += alpha * (dv[i](0) + alpha * dv[i](1));
+
+                x_[i] = x[i] + dx[i];
+                u_[i] = u[i] + du[i];
             }
 
             for (int i = 0; i < horizon; ++i) {
-                u_[i] = u[i] + du[i];
-                if (i % interval != 0) {
-                    // override
-                    dynamics.params.x = x_[i - 1];
-                    dynamics.params.u = u_[i - 1];
+                // override by simulation
+                if ((i + 1) % interval != 0) {
+                    dx[i] = x_[i] - x[i];
+
+                    ExtendedState z;
+                    z << dx[i], 1.0;
+
+                    K l = feedback(i, alpha);
+                    du[i] = l * z;
+                    u_[i] = u[i] + du[i];
+
+                    dynamics.params.x = x_[i];
+                    dynamics.params.u = u_[i];
 
                     dynamics.evaluate_extra();
                     dynamics.params.active = dynamics.get_foot_pos().z() <= 0;
 
                     dynamics.Base::evaluate(EvalOption::ZERO_ORDER);
-                    x_[i] = dynamics.get_f();
-                } else
-                    x_[i] = x[i] + dx[i];
+                    x_[i + 1] = dynamics.get_f();
+                }
+            }
 
+            for (int i = 0; i < horizon; ++i) {
                 cost.params.x = x_[i];
                 cost.params.u = u_[i];
                 cost.Base::evaluate(EvalOption::ZERO_ORDER);
@@ -226,6 +237,12 @@ void LQR::iterate() {
     linearize();
     solve();
     update();
+}
+
+LQR::K LQR::feedback(int i, double alpha) const {
+    K l = k[i];
+    l.rightCols<1>() *= alpha;
+    return l;
 }
 
 double LQR::total_cost() const {
