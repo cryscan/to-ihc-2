@@ -2,11 +2,12 @@
 // Created by cryscan on 8/18/21.
 //
 
-#include <cassert>
+#include <iostream>
 #include <limits>
 #include <omp.h>
 
 #include "lqr.h"
+#include "kinetics.h"
 #include "dynamics.h"
 #include "cost.h"
 
@@ -21,11 +22,12 @@ namespace {
 }
 
 LQR::LQR(int horizon, int interval, std::vector<double> line_search_steps, int max_line_search_trails,
-         const Dynamics& dynamics, const Cost& cost, const Cost& cost_final) :
+         const Kinetics& kinetics, const Dynamics& dynamics, const Cost& cost, const Cost& cost_final) :
         horizon(horizon),
         interval(interval),
         line_search_steps(std::move(line_search_steps)),
         max_line_search_trails(max_line_search_trails),
+        vec_kinetics(num_threads, kinetics),
         vec_dynamics(num_threads, dynamics),
         vec_cost(num_threads, cost),
         vec_cost_final(num_threads, cost_final),
@@ -45,6 +47,7 @@ LQR::LQR(int horizon, int interval, std::vector<double> line_search_steps, int m
     thread_alloc::hold_memory(true);
     CppAD::parallel_ad<double>();
 
+    for (auto& fun: vec_kinetics) fun.build_map();
     for (auto& fun: vec_dynamics) fun.build_map();
     for (auto& fun: vec_cost) fun.build_map();
     for (auto& fun: vec_cost_final) fun.build_map();
@@ -64,15 +67,17 @@ void LQR::init_linear_interpolation() {
 void LQR::linearize() {
 #pragma omp parallel for default(none)
     for (int i = 0; i < horizon; ++i) {
-        auto& dynamics = vec_dynamics[thread_num()];
-        auto& cost = vec_cost[thread_num()];
+        size_t id = thread_num();
+        auto& kinetics = vec_kinetics[id];
+        auto& dynamics = vec_dynamics[id];
+        auto& cost = vec_cost[id];
+
+        kinetics.params.x = x[i];
+        kinetics.Base::evaluate();
 
         dynamics.params.x = x[i];
         dynamics.params.u = u[i];
-
-        dynamics.evaluate_extra();
-        dynamics.params.active = dynamics.get_foot_pos().z() <= 0;
-
+        dynamics.params.active = kinetics.get_foot_pos().z() <= 0;
         dynamics.Base::evaluate();
 
         // linearize the system around the new trajectory
@@ -160,10 +165,8 @@ void LQR::update() {
 #pragma omp parallel for default(none) firstprivate(x_, u_, dx, du) shared(last_cost, min_cost, steps, x_hat, u_hat, ok)
         for (double alpha: steps) {
             size_t id = thread_num();
-
+            auto& kinetics = vec_kinetics[id];
             auto& dynamics = vec_dynamics[id];
-            auto& cost = vec_cost[id];
-            auto& cost_final = vec_cost_final[id];
 
             double local_cost = 0;
             double expected = 0;
@@ -196,11 +199,12 @@ void LQR::update() {
                     du[i] = l * z;
                     u_[i] = u[i] + du[i];
 
+                    kinetics.params.x = x_[i];
+                    kinetics.Base::evaluate();
+
                     dynamics.params.x = x_[i];
                     dynamics.params.u = u_[i];
-
-                    dynamics.evaluate_extra();
-                    dynamics.params.active = dynamics.get_foot_pos().z() <= 0;
+                    dynamics.params.active = kinetics.get_foot_pos().z() <= 0;
 
                     dynamics.Base::evaluate(EvalOption::ZERO_ORDER);
                     x_[i + 1] = dynamics.get_f();
@@ -208,16 +212,18 @@ void LQR::update() {
             }
 
             for (int i = 0; i < horizon; ++i) {
+                auto& cost = vec_cost[id];
                 cost.params.x = x_[i];
                 cost.params.u = u_[i];
                 cost.Base::evaluate(EvalOption::ZERO_ORDER);
                 local_cost += cost.get_f();
             }
             {
-                cost_final.params.x = x_[horizon];
-                cost_final.params.u = Action::Zero();
-                cost_final.Base::evaluate(EvalOption::ZERO_ORDER);
-                local_cost += cost_final.get_f();
+                auto& cost = vec_cost_final[id];
+                cost.params.x = x_[horizon];
+                cost.params.u = Action::Zero();
+                cost.Base::evaluate(EvalOption::ZERO_ORDER);
+                local_cost += cost.get_f();
             }
 
 #pragma omp critical

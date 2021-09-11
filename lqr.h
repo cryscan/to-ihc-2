@@ -5,9 +5,9 @@
 #ifndef TO_IHC_2_LQR_H
 #define TO_IHC_2_LQR_H
 
-#include <iostream>
-
 #include "common.h"
+
+class Kinetics;
 
 class Dynamics;
 
@@ -28,7 +28,7 @@ struct LQR {
     using K = Eigen::Matrix<double, action_dims, ext_state_dims>;
 
     LQR(int horizon, int interval, std::vector<double> line_search_steps, int max_line_search_trails,
-        const Dynamics& dynamics, const Cost& cost, const Cost& cost_final);
+        const Kinetics& kinetics, const Dynamics& dynamics, const Cost& cost, const Cost& cost_final);
 
     void init(const std::vector<State>& x, const std::vector<Action>& u);
     void init_linear_interpolation();
@@ -67,6 +67,7 @@ private:
 
     double decrease_ratio;
 
+    std::vector<Kinetics> vec_kinetics;
     std::vector<Dynamics> vec_dynamics;
     std::vector<Cost> vec_cost;
     std::vector<Cost> vec_cost_final;

@@ -7,7 +7,10 @@
 
 #include "common.h"
 
-struct CostParams {
+struct Cost;
+
+template<>
+struct Parameter<Cost> {
     State x, x_star;
     Action u;
 };
@@ -15,7 +18,7 @@ struct CostParams {
 #define INPUT_DIMS  (state_dims + state_dims + action_dims)
 #define OUTPUT_DIMS 1
 
-struct Cost : public ADBase<CostParams, INPUT_DIMS, OUTPUT_DIMS> {
+struct Cost : public ADBase<Cost, INPUT_DIMS, OUTPUT_DIMS> {
     using Base = decltype(base_type());
     using Base::Params;
 

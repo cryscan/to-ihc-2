@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 
+#include "kinetics.h"
 #include "dynamics.h"
 #include "cost.h"
 #include "lqr.h"
@@ -30,6 +31,8 @@ int main() {
     double defect_limit;
     is >> defect_limit;
 
+    Kinetics kinetics;
+
     Dynamics dynamics(50, 0.01, 1, 60);
     for (int i = 0; i < dynamics.params.x.size(); ++i)
         is >> dynamics.params.x(i);
@@ -42,7 +45,7 @@ int main() {
     Cost cost = make_cost(is, x_star);
     Cost cost_final = make_cost(is, x_star);
 
-    LQR lqr(horizon, interval, {1.0, 0.5, 0.25, 0.125}, 4, dynamics, cost, cost_final);
+    LQR lqr(horizon, interval, {1.0, 0.5, 0.25, 0.125}, 4, kinetics, dynamics, cost, cost_final);
     lqr.init_linear_interpolation();
 
     {

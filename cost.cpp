@@ -26,7 +26,6 @@ void Cost::build_map() {
 
 void Cost::evaluate(const Params& params, EvalOption option) {
     using Jacobian = Eigen::RowVectorXd;
-    using Hessian = Eigen::MatrixXd;
 
     Eigen::VectorXd x0(input_dims);
     Eigen::VectorXd y(output_dims);

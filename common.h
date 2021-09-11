@@ -24,9 +24,13 @@ enum class EvalOption {
     FIRST_ORDER,
 };
 
+template<typename T>
+struct Parameter {
+};
+
 template<typename T, int InputDims, int OutputDims>
 struct ADBase {
-    using Params = T;
+    using Params = Parameter<T>;
 
     using Scalar = Hopper::rcg::Scalar;
     using ScalarTraits = Hopper::rcg::ScalarTraits;
@@ -45,7 +49,7 @@ struct ADBase {
     void evaluate(EvalOption option = EvalOption::FIRST_ORDER) { this->evaluate(params, option); }
     virtual void evaluate(const Params&, EvalOption option) {};
 
-    static constexpr ADBase<Params, input_dims, output_dims> base_type() {}
+    static constexpr ADBase<T, input_dims, output_dims> base_type() {}
 
     Params params;
 
