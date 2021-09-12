@@ -33,8 +33,10 @@ struct Cost : public ADBase<Cost, INPUT_DIMS, OUTPUT_DIMS> {
     using State = Hopper::rcg::Matrix<state_dims, 1>;
 
     template<typename StateVector, typename ActionVector>
-    Cost(const Eigen::MatrixBase<StateVector>& scale_state,
+    Cost(const std::string& name,
+         const Eigen::MatrixBase<StateVector>& scale_state,
          const Eigen::MatrixBase<ActionVector>& scale_action) :
+            Base(name),
             scale_state(scale_state.template cast<Scalar>()),
             scale_action(scale_action.template cast<Scalar>()),
             f(0),

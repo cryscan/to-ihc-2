@@ -13,11 +13,12 @@ namespace {
     using Scalar = Dynamics::Scalar;
     using ScalarTraits = Dynamics::ScalarTraits;
 
-    inline Scalar min(const Scalar& a, const Scalar& b) { return ScalarTraits::min(a, b); }
-    inline Scalar max(const Scalar& a, const Scalar& b) { return ScalarTraits::max(a, b); }
+    inline Scalar min(const Scalar& x, const Scalar& y) { return ScalarTraits::min(x, y); }
+    inline Scalar max(const Scalar& x, const Scalar& y) { return ScalarTraits::max(x, y); }
 }
 
-Dynamics::Dynamics(int num_iters, double dt, double mu, double torque_limit) :
+Dynamics::Dynamics(const std::string& name, int num_iters, double dt, double mu, double torque_limit) :
+        Base(name),
         inverse_dynamics(inertia_properties, motion_transforms),
         jsim(inertia_properties, force_transforms),
         num_iters(num_iters),
@@ -33,7 +34,7 @@ std::tuple<Dynamics::JointState, Dynamics::JointState> Dynamics::step() const {
     JointState qm = q + u * dt / 2.0;
 
     JointState h, nle;
-    h << 0, 0, tau.unaryExpr([this](auto x) { return std::min(ad_torque_limit, std::max(-ad_torque_limit, x)); });
+    h << 0, 0, tau.unaryExpr([this](auto x) { return min(ad_torque_limit, max(-ad_torque_limit, x)); });
     inverse_dynamics.id(nle, qm, u, JointState::Zero());
     h -= nle;
 
@@ -51,9 +52,9 @@ std::tuple<Dynamics::JointState, Dynamics::JointState> Dynamics::step() const {
     Vector3 c = J * u + J * m_h * dt;
 
     G += Matrix3::Identity() * 0.1 * ScalarTraits::exp(12 * ScalarTraits::tanh(20 * d));
-    c += Vector3(0.0, 0.0, min(d, Scalar(0)) / dt);
+    c += Vector3(0, 0, min(d / dt, Scalar(0)));
 
-    Scalar r = 0.1;
+    Scalar r(0.1);
     p << 0, 0, inertia_properties.getTotalMass() * rcg::g * dt;
     for (int i = 0; i < num_iters; ++i)
         p = prox(p - r * (G * p + c));
@@ -101,13 +102,13 @@ void Dynamics::evaluate(const Params& params, EvalOption option) {
 
     x << params.x, params.u, params.d;
 
-    y = ad_fun.Forward(0, x);
+    y = model->ForwardZero(x);
     Eigen::DenseIndex it = 0;
     ASSIGN_VECTOR(f, y, it, state_dims)
 
     if (option == EvalOption::FIRST_ORDER) {
         Jacobian jac(output_dims, input_dims);
-        JACOBIAN_VIEW(jac) = ad_fun.Jacobian(x);
+        JACOBIAN_VIEW(jac) = model->Jacobian(x);
         it = 0;
         jac = jac.topRows<state_dims>();
         ASSIGN_COLS(df_dx, jac, it, state_dims)

@@ -10,11 +10,11 @@
 #include "dynamics.h"
 
 int main() {
-    Kinetics kinetics;
-    Dynamics dynamics(50, 0.01, 1, 60);
+    Kinetics kinetics("kinetics");
+    Dynamics dynamics("dynamics", 50, 0.01, 1, 60);
 
-    kinetics.build_map();
-    dynamics.build_map();
+    kinetics.Base::build_map();
+    dynamics.Base::build_map();
 
     State x0;
     x0 << 1.0, 0.0, 0.785, -1.57, 0.0, 0.0, 0.0, 0.0;

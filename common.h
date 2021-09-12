@@ -5,6 +5,8 @@
 #ifndef TO_IHC_2_COMMON_H
 #define TO_IHC_2_COMMON_H
 
+#include <memory>
+
 #include "hopper/declarations.h"
 #include "hopper/transforms.h"
 #include "hopper/jacobians.h"
@@ -40,11 +42,24 @@ struct ADBase {
     static constexpr int input_dims = InputDims;
     static constexpr int output_dims = OutputDims;
 
-    ADBase() = default;
-    ADBase(const ADBase& other) : params(other.params) {}
-    ADBase& operator=(const ADBase& other) { params = other.params; }
+    explicit ADBase(const std::string& name) :
+            name(name),
+            library_name(name + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION) {}
 
-    virtual void build_map() {};
+    ADBase(const ADBase& other) : params(other.params), name(other.name), library_name(other.library_name) {}
+
+    virtual void build_map() {
+        this->build_map();
+
+        using namespace CppAD::cg;
+        if (!system::isFile(library_name)) {
+            std::cout << "Compiling " << library_name << std::endl;
+            compile_library();
+        } else {
+            std::cout << "Loading " << library_name << std::endl;
+            load_library();
+        }
+    };
 
     void evaluate(EvalOption option = EvalOption::FIRST_ORDER) { this->evaluate(params, option); }
     virtual void evaluate(const Params&, EvalOption option) {};
@@ -54,9 +69,36 @@ struct ADBase {
     Params params;
 
 protected:
+    const std::string name;
+    const std::string library_name;
+
     Hopper::rcg::Matrix<Eigen::Dynamic, 1> ad_x{input_dims};
     Hopper::rcg::Matrix<Eigen::Dynamic, 1> ad_y{output_dims};
-    CppAD::ADFun<double> ad_fun;
+    CppAD::ADFun<Scalar::value_type> ad_fun;
+
+    std::unique_ptr<CppAD::cg::DynamicLib<double>> lib;
+    std::unique_ptr<CppAD::cg::GenericModel<double>> model;
+
+    void compile_library() {
+        using namespace CppAD::cg;
+
+        ModelCSourceGen<double> c_source_gen(ad_fun, name);
+        c_source_gen.setCreateForwardZero(true);
+        c_source_gen.setCreateJacobian(true);
+
+        ModelLibraryCSourceGen<double> library_c_source_gen(c_source_gen);
+        DynamicModelLibraryProcessor<double> processor(library_c_source_gen, name);
+        GccCompiler<double> compiler;
+
+        lib = processor.createDynamicLibrary(compiler);
+        model = lib->model(name);
+    }
+
+    void load_library() {
+        using namespace CppAD::cg;
+        lib = std::make_unique<LinuxDynamicLib<double>>(library_name);
+        model = lib->model(name);
+    }
 };
 
 #define ASSIGN_VECTOR(to, from, it, size) (to) = (from).segment<(size)>(it); (it) += (size);

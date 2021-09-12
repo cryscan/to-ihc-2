@@ -26,7 +26,7 @@ void Kinetics::evaluate(const ADBase::Params& params, EvalOption option) {
 
     x << params.x;
 
-    y = ad_fun.Forward(0, x);
+    y = model->ForwardZero(x);
     Eigen::DenseIndex it = 0;
     ASSIGN_VECTOR(body_pos, y, it, 3)
     ASSIGN_VECTOR(knee_pos, y, it, 3)

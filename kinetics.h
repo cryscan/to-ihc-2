@@ -31,6 +31,8 @@ struct Kinetics : public ADBase<Kinetics, INPUT_DIMS, OUTPUT_DIMS> {
     using Vector3 = Hopper::rcg::Vector3;
     using Affine3 = Eigen::Transform<Scalar, 3, Eigen::Affine>;
 
+    explicit Kinetics(const std::string& name) : Base(name) {}
+
     void build_map() override;
     void evaluate(const Params& params, EvalOption option) override;
 

@@ -1,12 +1,28 @@
 #ifndef IIT_ROBCOGEN_TPL_CPPAD_H
 #define IIT_ROBCOGEN_TPL_CPPAD_H
 
-#include <cppad/cppad.hpp>
 #include <cppad/example/cppad_eigen.hpp> // for the Eigen traits
 
 #include <iit/rbd/rbd.h>
 #include <iit/rbd/scalar_traits.h>
 #include <iit/robcogen/macros.h>
+
+namespace CppAD {
+    namespace cg {
+        template<typename Base>
+        struct ADCG : public AD<CG<Base>> {
+            ADCG() = default;
+            ADCG(const AD<CG<Base>>& ad) : AD<CG<Base>>(ad) {}
+            ADCG(const cg::CG<Base>& cg) : AD<CG<Base>>(cg) {}
+            ADCG(const Base& b) : AD<CppAD::cg::CG<Base>>(b) {}
+        };
+    }
+
+    template<typename Base>
+    struct ok_if_S_same_as_T<AD<cg::CG<Base>>, cg::ADCG<Base>> {
+        AD<cg::CG<Base>> value;
+    };
+}
 
 namespace iit {
     namespace robcogen {
@@ -23,8 +39,8 @@ namespace iit {
                 inline static Scalar sqrt(const Scalar& x) { return CppAD::sqrt(x); }
                 inline static Scalar abs(const Scalar& x) { return CppAD::abs(x); }
 
-                inline static Scalar min(const Scalar& a, const Scalar& b) { return CppAD::CondExpLt(a, b, a, b); }
-                inline static Scalar max(const Scalar& a, const Scalar& b) { return CppAD::CondExpGt(a, b, a, b); }
+                inline static Scalar min(const Scalar& x, const Scalar& y) { return CppAD::CondExpLt(x, y, x, y); }
+                inline static Scalar max(const Scalar& x, const Scalar& y) { return CppAD::CondExpGt(x, y, x, y); }
             };
         } //namespace 'cppad'
 
@@ -61,6 +77,13 @@ namespace Eigen {
     template<typename Derived>
     iit::robcogen::cppad::Double
     operator+(const iit::rbd::MatrixBase<Derived>& lhs, const iit::robcogen::cppad::Double& rhs) {
+        iit_rbd_matrix_specific_size(iit::rbd::MatrixBase<Derived>, 1, 1)
+        return lhs.derived().coeff(0, 0) + rhs;
+    }
+
+    template<typename Derived, typename Base>
+    CppAD::cg::ADCG<Base>
+    operator+(const iit::rbd::MatrixBase<Derived>& lhs, const CppAD::cg::ADCG<Base>& rhs) {
         iit_rbd_matrix_specific_size(iit::rbd::MatrixBase<Derived>, 1, 1)
         return lhs.derived().coeff(0, 0) + rhs;
     }

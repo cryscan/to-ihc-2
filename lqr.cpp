@@ -47,10 +47,10 @@ LQR::LQR(int horizon, int interval, std::vector<double> line_search_steps, int m
     thread_alloc::hold_memory(true);
     CppAD::parallel_ad<double>();
 
-    for (auto& fun: vec_kinetics) fun.build_map();
-    for (auto& fun: vec_dynamics) fun.build_map();
-    for (auto& fun: vec_cost) fun.build_map();
-    for (auto& fun: vec_cost_final) fun.build_map();
+    for (auto& fun: vec_kinetics) fun.Base::build_map();
+    for (auto& fun: vec_dynamics) fun.Base::build_map();
+    for (auto& fun: vec_cost) fun.Base::build_map();
+    for (auto& fun: vec_cost_final) fun.Base::build_map();
 }
 
 void LQR::init(const std::vector<State>& x_, const std::vector<Action>& u_) {
@@ -182,32 +182,30 @@ void LQR::update() {
 
                 expected += alpha * (dv[i](0) + alpha * dv[i](1));
 
-                x_[i] = x[i] + dx[i];
-                u_[i] = u[i] + du[i];
+                // x_[i] = x[i] + dx[i];
+                // u_[i] = u[i] + du[i];
             }
 
             for (int i = 0; i < horizon; ++i) {
                 // override by simulation
-                if ((i + 1) % interval != 0) {
-                    dx[i] = x_[i] - x[i];
+                dx[i] = x_[i] - x[i];
 
-                    ExtendedState z;
-                    z << dx[i], 1.0;
+                ExtendedState z;
+                z << dx[i], 1.0;
 
-                    K l = feedback(i, alpha);
-                    du[i] = l * z;
-                    u_[i] = u[i] + du[i];
+                K l = feedback(i, alpha);
+                du[i] = l * z;
+                u_[i] = u[i] + du[i];
 
-                    kinetics.params.x = x_[i];
-                    kinetics.Base::evaluate();
+                kinetics.params.x = x_[i];
+                kinetics.Base::evaluate();
 
-                    dynamics.params.x = x_[i];
-                    dynamics.params.u = u_[i];
-                    dynamics.params.d = kinetics.get_foot_pos().z();
+                dynamics.params.x = x_[i];
+                dynamics.params.u = u_[i];
+                dynamics.params.d = kinetics.get_foot_pos().z();
 
-                    dynamics.Base::evaluate(EvalOption::ZERO_ORDER);
-                    x_[i + 1] = dynamics.get_f();
-                }
+                dynamics.Base::evaluate(EvalOption::ZERO_ORDER);
+                x_[i + 1] = dynamics.get_f();
             }
 
             double local_cost = total_cost(x_, u_);

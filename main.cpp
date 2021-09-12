@@ -10,13 +10,13 @@
 using namespace Hopper;
 
 auto make_dynamics(std::istream& is) {
-    Dynamics dynamics(50, 0.01, 1, 60);
+    Dynamics dynamics("dynamics", 50, 0.01, 1, 60);
     for (int i = 0; i < dynamics.params.x.size(); ++i)
         is >> dynamics.params.x(i);
     return dynamics;
 }
 
-auto make_cost(std::istream& is, const State& x_star) {
+auto make_cost(std::istream& is, const std::string& name, const State& x_star) {
     Eigen::VectorXd scale_state(8);
     for (int i = 0; i < scale_state.size(); ++i)
         is >> scale_state(i);
@@ -24,7 +24,7 @@ auto make_cost(std::istream& is, const State& x_star) {
     Eigen::Vector2d scale_action;
     is >> scale_action(0) >> scale_action(1);
 
-    Cost cost(scale_state, scale_action);
+    Cost cost(name, scale_state, scale_action);
     cost.params.x_star = x_star;
 
     return cost;
@@ -64,7 +64,7 @@ auto make_lqr(std::istream& is,
 
     interval = horizon;
 
-    LQR lqr(horizon, interval, {1.0, 0.5, 0.25, 0.125}, 1, kinetics, dynamics, cost, cost_final);
+    LQR lqr(horizon, interval, {1.0, 0.5, 0.25, 0.125}, 2, kinetics, dynamics, cost, cost_final);
 
     std::ifstream fs(init_file);
     auto[x, u] = read_init_trajectory(fs);
@@ -82,15 +82,15 @@ int main() {
     double defect_limit;
     is >> defect_limit;
 
-    Kinetics kinetics;
+    Kinetics kinetics("kinetics");
     auto dynamics = make_dynamics(is);
 
     State x_star;
     for (int i = 0; i < x_star.size(); ++i)
         is >> x_star(i);
 
-    auto cost = make_cost(is, x_star);
-    auto cost_final = make_cost(is, x_star);
+    auto cost = make_cost(is, "cost", x_star);
+    auto cost_final = make_cost(is, "cost_final", x_star);
 
     auto lqr = make_lqr(is, kinetics, dynamics, cost, cost_final);
 

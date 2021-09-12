@@ -33,7 +33,7 @@ struct Dynamics : public ADBase<Dynamics, INPUT_DIMS, OUTPUT_DIMS> {
     using Vector3 = Hopper::rcg::Vector3;
     using Matrix3 = Hopper::rcg::Matrix<3, 3>;
 
-    Dynamics(int num_iters, double dt, double mu, double torque_limit);
+    Dynamics(const std::string& name, int num_iters, double dt, double mu, double torque_limit);
 
     void build_map() override;
     void evaluate(const Params& params, EvalOption option) override;
