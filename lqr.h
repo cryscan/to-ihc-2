@@ -67,10 +67,10 @@ private:
 
     double decrease_ratio;
 
-    std::vector<Kinetics> vec_kinetics;
-    std::vector<Dynamics> vec_dynamics;
-    std::vector<Cost> vec_cost;
-    std::vector<Cost> vec_cost_final;
+    mutable std::vector<Kinetics> vec_kinetics;
+    mutable std::vector<Dynamics> vec_dynamics;
+    mutable std::vector<Cost> vec_cost;
+    mutable std::vector<Cost> vec_cost_final;
 
     void linearize();
     void solve();
@@ -78,6 +78,8 @@ private:
 
     // returns the feedback control matrix at step i.
     [[nodiscard]] inline K feedback(int i, double alpha) const;
+
+    [[nodiscard]] inline double total_cost(const std::vector<State>& x, const std::vector<Action>& u) const;
 };
 
 #endif //TO_IHC_2_LQR_H

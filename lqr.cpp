@@ -168,7 +168,6 @@ void LQR::update() {
             auto& kinetics = vec_kinetics[id];
             auto& dynamics = vec_dynamics[id];
 
-            double local_cost = 0;
             double expected = 0;
 
             for (int i = 0; i < horizon; ++i) {
@@ -211,20 +210,7 @@ void LQR::update() {
                 }
             }
 
-            for (int i = 0; i < horizon; ++i) {
-                auto& cost = vec_cost[id];
-                cost.params.x = x_[i];
-                cost.params.u = u_[i];
-                cost.Base::evaluate(EvalOption::ZERO_ORDER);
-                local_cost += cost.get_f();
-            }
-            {
-                auto& cost = vec_cost_final[id];
-                cost.params.x = x_[horizon];
-                cost.params.u = Action::Zero();
-                cost.Base::evaluate(EvalOption::ZERO_ORDER);
-                local_cost += cost.get_f();
-            }
+            double local_cost = total_cost(x_, u_);
 
 #pragma omp critical
             {
@@ -263,12 +249,30 @@ LQR::K LQR::feedback(int i, double alpha) const {
     return l;
 }
 
-double LQR::total_cost() const {
+double LQR::total_cost(const std::vector<State>& x_, const std::vector<Action>& u_) const {
+    size_t id = thread_num();
     double c = 0;
-    for (int i = 0; i < horizon; ++i)
-        c += q[i].bottomRightCorner<1, 1>()(0);
-    c += p[horizon].bottomRightCorner<1, 1>()(0);
+
+    for (int i = 0; i < horizon; ++i) {
+        auto& cost = vec_cost[id];
+        cost.params.x = x_[i];
+        cost.params.u = u_[i];
+        cost.Base::evaluate(EvalOption::ZERO_ORDER);
+        c += cost.get_f();
+    }
+    {
+        auto& cost = vec_cost_final[id];
+        cost.params.x = x_[horizon];
+        cost.params.u = Action::Zero();
+        cost.Base::evaluate(EvalOption::ZERO_ORDER);
+        c += cost.get_f();
+    }
+
     return c;
+}
+
+double LQR::total_cost() const {
+    return total_cost(x, u);
 }
 
 double LQR::total_defect() const {
