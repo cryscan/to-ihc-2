@@ -17,7 +17,7 @@ int main() {
     dynamics.build_map();
 
     State x0;
-    x0 << 0.0, 0.0, 0.785, -1.57, 0.0, 0.0, 0.0, 0.0;
+    x0 << 1.0, 0.0, 0.785, -1.57, 0.0, 0.0, 0.0, 0.0;
 
     int horizon = 200;
     std::vector<State> x(horizon + 1, x0);
@@ -29,8 +29,8 @@ int main() {
 
         dynamics.params.x = x[i];
         dynamics.params.u = u[i];
-        dynamics.params.active = kinetics.get_foot_pos().z() <= 0;
-        dynamics.Base::evaluate(EvalOption::ZERO_ORDER);
+        dynamics.params.d = kinetics.get_foot_pos().z();
+        dynamics.Base::evaluate();
 
         x[i + 1] = dynamics.get_f();
     }

@@ -4,30 +4,26 @@
 #include <iit/rbd/rbd.h>
 #include <iit/rbd/scalar_traits.h>
 #include <iit/rbd/InertiaMatrix.h>
-#include <iit/robcogen/scalar/cppad.h>
 
-namespace Hopper {
-    namespace rcg {
+#include "cppad.h"
 
-// typedef typename iit::rbd::DoubleTraits ScalarTraits;
-        typedef typename iit::robcogen::CppADDoubleTraits ScalarTraits;
-        typedef typename ScalarTraits::Scalar Scalar;
+namespace Hopper::rcg {
+    typedef typename iit::robcogen::CppADDoubleTraits ScalarTraits;
+    typedef typename ScalarTraits::Scalar Scalar;
 
-        typedef iit::rbd::Core<Scalar> TypesGen;
-        typedef TypesGen::ForceVector Force;
-        typedef TypesGen::VelocityVector Velocity;
-        typedef TypesGen::VelocityVector Acceleration;
-        typedef TypesGen::Matrix66 Matrix66;
-        typedef TypesGen::Column6D Column6;
-        typedef TypesGen::Vector3 Vector3;
+    typedef iit::rbd::Core<Scalar> TypesGen;
+    typedef TypesGen::ForceVector Force;
+    typedef TypesGen::VelocityVector Velocity;
+    typedef TypesGen::VelocityVector Acceleration;
+    typedef TypesGen::Matrix66 Matrix66;
+    typedef TypesGen::Column6D Column6;
+    typedef TypesGen::Vector3 Vector3;
 
-        template<int R, int C>
-        using Matrix = iit::rbd::PlainMatrix<Scalar, R, C>;
+    template<int R, int C>
+    using Matrix = iit::rbd::PlainMatrix<Scalar, R, C>;
 
-        using InertiaMatrix = iit::rbd::InertiaMat<Scalar>;
+    using InertiaMatrix = iit::rbd::InertiaMat<Scalar>;
 
-        static const Scalar g = iit::rbd::g;
-
-    }
+    static const Scalar g = iit::rbd::g;
 }
 #endif

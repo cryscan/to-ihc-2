@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 #include "kinetics.h"
 #include "dynamics.h"
@@ -8,7 +9,14 @@
 
 using namespace Hopper;
 
-Cost make_cost(std::istream& is, const State& x_star) {
+auto make_dynamics(std::istream& is) {
+    Dynamics dynamics(50, 0.01, 1, 60);
+    for (int i = 0; i < dynamics.params.x.size(); ++i)
+        is >> dynamics.params.x(i);
+    return dynamics;
+}
+
+auto make_cost(std::istream& is, const State& x_star) {
     Eigen::VectorXd scale_state(8);
     for (int i = 0; i < scale_state.size(); ++i)
         is >> scale_state(i);
@@ -22,34 +30,72 @@ Cost make_cost(std::istream& is, const State& x_star) {
     return cost;
 }
 
+auto read_init_trajectory(std::ifstream& fs) {
+    std::vector<State> x;
+    std::vector<Action> u;
+
+    std::string line;
+    while (std::getline(fs, line)) {
+        std::stringstream ss(line);
+        State x_;
+        Action u_;
+
+        for (int i = 0; i < x_.size(); ++i)
+            ss >> x_(i);
+        for (int i = 0; i < u_.size(); ++i) {
+            ss >> u_(i);
+        }
+
+        x.push_back(x_);
+        u.push_back(u_);
+    }
+
+    return std::tuple(x, u);
+}
+
+auto make_lqr(std::istream& is,
+              const Kinetics& kinetics,
+              const Dynamics& dynamics,
+              const Cost& cost,
+              const Cost& cost_final) {
+    int horizon, interval;
+    std::string init_file;
+    is >> horizon >> init_file;
+
+    interval = horizon;
+
+    LQR lqr(horizon, interval, {1.0, 0.5, 0.25, 0.125}, 1, kinetics, dynamics, cost, cost_final);
+
+    std::ifstream fs(init_file);
+    auto[x, u] = read_init_trajectory(fs);
+    lqr.init(x, u);
+
+    return lqr;
+}
+
 int main() {
     std::fstream is("in.txt", std::ios::in);
 
-    int horizon, interval, num_iters;
-    is >> horizon >> interval >> num_iters;
+    int num_iters;
+    is >> num_iters;
 
     double defect_limit;
     is >> defect_limit;
 
     Kinetics kinetics;
-
-    Dynamics dynamics(50, 0.01, 1, 60);
-    for (int i = 0; i < dynamics.params.x.size(); ++i)
-        is >> dynamics.params.x(i);
-    is >> dynamics.params.u(0) >> dynamics.params.u(1);
+    auto dynamics = make_dynamics(is);
 
     State x_star;
     for (int i = 0; i < x_star.size(); ++i)
         is >> x_star(i);
 
-    Cost cost = make_cost(is, x_star);
-    Cost cost_final = make_cost(is, x_star);
+    auto cost = make_cost(is, x_star);
+    auto cost_final = make_cost(is, x_star);
 
-    LQR lqr(horizon, interval, {1.0, 0.5, 0.25, 0.125}, 4, kinetics, dynamics, cost, cost_final);
-    lqr.init_linear_interpolation();
+    auto lqr = make_lqr(is, kinetics, dynamics, cost, cost_final);
 
     {
-        std::cout << "initialization finished" << std::endl;
+        std::cout << "Initialization finished" << std::endl;
 
         std::fstream os("out.txt", std::ios::out | std::ios::trunc);
         lqr.print(os);

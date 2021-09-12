@@ -13,7 +13,7 @@ template<>
 struct Parameter<Dynamics> {
     State x;
     Action u;
-    double active{0};
+    double d{0};
 };
 
 #define INPUT_DIMS  (state_dims + action_dims + 1)
@@ -61,7 +61,7 @@ private:
 
     JointState q, u;
     Action tau;
-    Scalar active;
+    Scalar d;
 
     State f;
     Eigen::Matrix<double, state_dims, state_dims, Eigen::RowMajor> df_dx;
