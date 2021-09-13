@@ -2,7 +2,7 @@ import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import numpy as np
 
-file = open("cmake-build-debug/out.txt", 'r')
+file = open("out.txt", 'r')
 states = []
 for line in file.readlines():
     state = [float(x) for x in line.split()]
@@ -11,8 +11,8 @@ for line in file.readlines():
 dt = 0.01
 L = 0.3
 
-fig = plt.figure(figsize=(10, 4))
-ax = fig.add_subplot(autoscale_on=False, xlim=(-2., 2.), ylim=(-0.25, 1.75))
+fig = plt.figure(figsize=(4, 4))
+ax = fig.add_subplot(autoscale_on=False, xlim=(-0.5, 1.5), ylim=(-0.25, 1.75))
 ax.set_aspect('equal')
 ax.grid()
 
@@ -40,5 +40,5 @@ def animate(i):
 
 
 ani = animation.FuncAnimation(fig, animate, len(states), interval=dt * 1000, blit=True)
-# ani.save("animation.mp4")
+ani.save("animation.mp4")
 plt.show()

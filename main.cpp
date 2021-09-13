@@ -9,6 +9,19 @@
 
 using namespace Hopper;
 
+auto read_input_file() {
+    std::fstream fs("in.txt", std::ios::in);
+    std::string str, line;
+
+    while (std::getline(fs, line)) {
+        if (!line.empty() && line[0] != '#') {
+            str.append(line + '\t');
+        }
+    }
+
+    return std::stringstream(str);
+}
+
 auto make_dynamics(std::istream& is) {
     Dynamics dynamics("dynamics", 50, 0.01, 1, 60);
     for (int i = 0; i < dynamics.params.x.size(); ++i)
@@ -74,7 +87,7 @@ auto make_lqr(std::istream& is,
 }
 
 int main() {
-    std::fstream is("in.txt", std::ios::in);
+    auto is = read_input_file();
 
     int num_iters;
     is >> num_iters;
