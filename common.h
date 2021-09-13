@@ -6,6 +6,7 @@
 #define TO_IHC_2_COMMON_H
 
 #include <memory>
+#include <type_traits>
 
 #include "hopper/declarations.h"
 #include "hopper/transforms.h"
@@ -64,7 +65,7 @@ struct ADBase {
     void evaluate(EvalOption option = EvalOption::FIRST_ORDER) { this->evaluate(params, option); }
     virtual void evaluate(const Params&, EvalOption option) {};
 
-    static constexpr ADBase<T, input_dims, output_dims> base_type() {}
+    static constexpr std::remove_pointer<ADBase<T, input_dims, output_dims>> base_type() {};
 
     Params params;
 

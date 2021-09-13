@@ -19,7 +19,7 @@ struct Parameter<Cost> {
 #define OUTPUT_DIMS 1
 
 struct Cost : public ADBase<Cost, INPUT_DIMS, OUTPUT_DIMS> {
-    using Base = decltype(base_type());
+    using Base = decltype(base_type())::type;
     using Base::Params;
 
     using Base::Scalar;

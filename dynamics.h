@@ -20,7 +20,7 @@ struct Parameter<Dynamics> {
 #define OUTPUT_DIMS state_dims
 
 struct Dynamics : public ADBase<Dynamics, INPUT_DIMS, OUTPUT_DIMS> {
-    using Base = decltype(base_type());
+    using Base = decltype(base_type())::type;
 
     using Base::Scalar;
     using Base::ScalarTraits;

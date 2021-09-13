@@ -18,7 +18,7 @@ struct Parameter<Kinetics> {
 #define OUTPUT_DIMS 9
 
 struct Kinetics : public ADBase<Kinetics, INPUT_DIMS, OUTPUT_DIMS> {
-    using Base = decltype(base_type());
+    using Base = decltype(base_type())::type;
 
     using Base::Scalar;
     using Base::ScalarTraits;
