@@ -13,8 +13,8 @@ namespace CppAD {
         struct ADCG : public AD<CG<Base>> {
             ADCG() = default;
             ADCG(const AD<CG<Base>>& ad) : AD<CG<Base>>(ad) {}
-            ADCG(const cg::CG<Base>& cg) : AD<CG<Base>>(cg) {}
-            ADCG(const Base& b) : AD<CppAD::cg::CG<Base>>(b) {}
+            ADCG(const CG<Base>& cg) : AD<CG<Base>>(cg) {}
+            ADCG(const Base& b) : AD<CG<Base>>(b) {}
         };
     }
 

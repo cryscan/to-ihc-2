@@ -76,7 +76,7 @@ To run the code, create a `in.txt` under the `build` folder with the following c
 Then run
 
 ```shell
-$ ./to_ihc_2
+$ ./control
 ```
 
 In the first run it generates codes for dynamics, cost, etc. and compiles them, which may take some time. It won't do
@@ -87,6 +87,14 @@ Very quickly the result trajectory will be stored in `out.txt`. It can be visual
 ```shell
 $ python3 ../visual.py
 ```
+
+Also, running
+
+```shell
+$ ./simulation
+```
+
+generates a rollout without any control signals.
 
 # Reference
 
