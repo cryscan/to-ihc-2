@@ -14,6 +14,8 @@ The robot's kinetic and dynamics models are generated using [`RobCoGen`](https:/
 The time stepping scheme in [1] has some problem where the end effector is easy to penetrate the ground, which
 significantly hinders the optimization. Some fixes are taken place according to [2].
 
+To improve the stability of iLQR iterations, regularization and line-search schemes in [3] are used.
+
 ## Running
 
 This project is written in `c++` and is only tested under Linux.
@@ -102,3 +104,6 @@ generates a rollout without any control signals.
    Robotics and Automation Letters, vol. 3, no. 4, pp. 3316-3323, Oct. 2018, doi: 10.1109/LRA.2018.2852785.
 2. J. Carius, R. Ranftl, V. Koltun and M. Hutter, "Trajectory Optimization for Legged Robots With Slipping Motions," in
    IEEE Robotics and Automation Letters, vol. 4, no. 3, pp. 3013-3020, July 2019, doi: 10.1109/LRA.2019.2923967.
+3. Y. Tassa, T. Erez and E. Todorov, "Synthesis and stabilization of complex behaviors through online trajectory
+   optimization," 2012 IEEE/RSJ International Conference on Intelligent Robots and Systems, 2012, pp. 4906-4913, doi:
+   10.1109/IROS.2012.6386025.
