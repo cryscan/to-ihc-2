@@ -4,7 +4,7 @@ This is an unofficial implementation of [1]. The algorithm makes use of concepts
 gradients of the system dynamics including the constraint forces and subsequently solve the optimal control problem with
 the unconstrained iLQR algorithm.
 
-[Link](https://youtu.be/FF3h_-KwoyE) to the result video.
+Click the [link](https://youtu.be/FF3h_-KwoyE) to watch the result video.
 
 ## Implementation
 
@@ -27,7 +27,7 @@ robot models.
 
 The code also depends on [`CppAD`](https://github.com/coin-or/CppAD.git)
 and [`CppADCodeGen`](https://github.com/joaoleal/CppADCodeGen.git). These are both `c++` header-only libraries that
-supports fast auto-differentiation.
+support fast auto-differentiation.
 
 ### Clone and Compile
 
@@ -79,8 +79,8 @@ Then run
 $ ./control
 ```
 
-In the first run it generates codes for dynamics, cost, etc. and compiles them, which may take some time. It won't do
-this in the next runs if the compiled dynamic libraries still exist.
+In the first run it generates codes for dynamics, cost, etc. and compiles them, which may take some time. It won't
+compile again in future runs if the compiled dynamic libraries exist.
 
 Very quickly the result trajectory will be stored in `out.txt`. It can be visualized by running
 
@@ -88,7 +88,7 @@ Very quickly the result trajectory will be stored in `out.txt`. It can be visual
 $ python3 ../visual.py
 ```
 
-Also, running
+Alternatively, running
 
 ```shell
 $ ./simulation
