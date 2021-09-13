@@ -77,7 +77,7 @@ auto make_lqr(std::istream& is,
 
     interval = horizon;
 
-    LQR lqr(horizon, interval, {1.0, 0.5, 0.25, 0.125}, 2, kinetics, dynamics, cost, cost_final);
+    LQR lqr(horizon, interval, {1.0, 0.5, 0.25, 0.125}, 4, kinetics, dynamics, cost, cost_final);
 
     std::ifstream fs(init_file);
     auto[x, u] = read_init_trajectory(fs);
@@ -119,7 +119,6 @@ int main() {
 
         std::cout << "iter " << i << ":\t"
                   << lqr.total_cost() << '\t'
-                  << lqr.total_defect() << '\t'
                   << lqr.get_decrease_ratio() << std::endl;
 
         if (defect_limit < 0.0 || lqr.total_defect() < defect_limit) {
