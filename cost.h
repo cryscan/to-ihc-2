@@ -30,7 +30,7 @@ struct Cost : public ADBase<Cost, INPUT_DIMS, OUTPUT_DIMS> {
     using Base::input_dims;
     using Base::output_dims;
 
-    using State = Hopper::rcg::Matrix<state_dims, 1>;
+    using State = Robot::rcg::Matrix<state_dims, 1>;
 
     template<typename StateVector, typename ActionVector>
     Cost(const std::string& name,
@@ -56,8 +56,8 @@ struct Cost : public ADBase<Cost, INPUT_DIMS, OUTPUT_DIMS> {
     // const Eigen::Matrix<double, action_dims, 1> scale_action;
 
 private:
-    const Hopper::rcg::Matrix<state_dims, 1> scale_state;
-    const Hopper::rcg::Matrix<action_dims, 1> scale_action;
+    const Robot::rcg::Matrix<state_dims, 1> scale_state;
+    const Robot::rcg::Matrix<action_dims, 1> scale_action;
 
     State x, x_star;
     Action u;

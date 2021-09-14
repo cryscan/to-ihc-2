@@ -11,8 +11,8 @@ for line in file.readlines():
 dt = 0.01
 L = 0.3
 
-fig = plt.figure(figsize=(6, 4))
-ax = fig.add_subplot(autoscale_on=False, xlim=(-0.25, 2.25), ylim=(-0.25, 1.75))
+fig = plt.figure(figsize=(4, 4))
+ax = fig.add_subplot(autoscale_on=False, xlim=(-0.5, 1.5), ylim=(-0.25, 1.75))
 ax.set_aspect('equal')
 ax.grid()
 

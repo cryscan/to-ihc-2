@@ -7,8 +7,6 @@
 #include "cost.h"
 #include "lqr.h"
 
-using namespace Hopper;
-
 auto read_input_file() {
     std::fstream fs("in.txt", std::ios::in);
     std::string str, line;

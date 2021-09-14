@@ -15,6 +15,9 @@
 #include "hopper/jsim.h"
 #include "hopper/inverse_dynamics.h"
 
+// change this to switch robot model
+namespace Robot = Hopper;
+
 static constexpr int joint_space_dims = Hopper::rcg::JointSpaceDimension;
 static constexpr int state_dims = joint_space_dims + joint_space_dims;
 static constexpr int action_dims = 2;
@@ -35,10 +38,10 @@ template<typename T, int InputDims, int OutputDims>
 struct ADBase {
     using Params = Parameter<T>;
 
-    using Scalar = Hopper::rcg::Scalar;
-    using ScalarTraits = Hopper::rcg::ScalarTraits;
-    using JointState = Hopper::rcg::JointState;
-    using Action = Hopper::rcg::Matrix<action_dims, 1>;
+    using Scalar = Robot::rcg::Scalar;
+    using ScalarTraits = Robot::rcg::ScalarTraits;
+    using JointState = Robot::rcg::JointState;
+    using Action = Robot::rcg::Matrix<action_dims, 1>;
 
     static constexpr int input_dims = InputDims;
     static constexpr int output_dims = OutputDims;
@@ -73,8 +76,8 @@ protected:
     const std::string name;
     const std::string library_name;
 
-    Hopper::rcg::Matrix<Eigen::Dynamic, 1> ad_x{input_dims};
-    Hopper::rcg::Matrix<Eigen::Dynamic, 1> ad_y{output_dims};
+    Robot::rcg::Matrix<Eigen::Dynamic, 1> ad_x{input_dims};
+    Robot::rcg::Matrix<Eigen::Dynamic, 1> ad_y{output_dims};
     CppAD::ADFun<ScalarTraits::ValueType> ad_fun;
 
     std::unique_ptr<CppAD::cg::DynamicLib<double>> lib;

@@ -28,7 +28,7 @@ struct Kinetics : public ADBase<Kinetics, INPUT_DIMS, OUTPUT_DIMS> {
     using Base::input_dims;
     using Base::output_dims;
 
-    using Vector3 = Hopper::rcg::Vector3;
+    using Vector3 = Robot::rcg::Vector3;
     using Affine3 = Eigen::Transform<Scalar, 3, Eigen::Affine>;
 
     explicit Kinetics(const std::string& name) : Base(name) {}
@@ -41,7 +41,7 @@ struct Kinetics : public ADBase<Kinetics, INPUT_DIMS, OUTPUT_DIMS> {
     Eigen::Vector3d get_foot_pos() const { return foot_pos; }
 
 private:
-    mutable Hopper::rcg::HomogeneousTransforms transforms;
+    mutable Robot::rcg::HomogeneousTransforms transforms;
 
     JointState q, u;
 

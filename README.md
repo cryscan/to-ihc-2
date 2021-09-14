@@ -58,10 +58,10 @@ To run the code, create a `in.txt` under the `build` folder with the following c
 20 -1.0
 
 # Initial configuration
--0.18 0.0 0.785 -1.57 0.0 0.0 0.0 0.0
+0.0 0.0 0.785 -1.57 0.0 0.0 0.0 0.0
 
 # Target configuration
-0.0 2.0 0.785 -1.57 0.0 0.0 0.0 0.0
+0.0 1.0 0.785 -1.57 0.0 0.0 0.0 0.0
 
 # Running cost
 0.0 0.0 1.0 1.0 0.01 0.01 0.01 0.01

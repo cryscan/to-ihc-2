@@ -30,8 +30,8 @@ struct Dynamics : public ADBase<Dynamics, INPUT_DIMS, OUTPUT_DIMS> {
     using Base::input_dims;
     using Base::output_dims;
 
-    using Vector3 = Hopper::rcg::Vector3;
-    using Matrix3 = Hopper::rcg::Matrix<3, 3>;
+    using Vector3 = Robot::rcg::Vector3;
+    using Matrix3 = Robot::rcg::Matrix<3, 3>;
 
     Dynamics(const std::string& name, int num_iters, double dt, double mu, double torque_limit);
 
@@ -45,14 +45,14 @@ struct Dynamics : public ADBase<Dynamics, INPUT_DIMS, OUTPUT_DIMS> {
     const double torque_limit;
 
 private:
-    mutable Hopper::rcg::HomogeneousTransforms transforms;
-    mutable Hopper::rcg::MotionTransforms motion_transforms;
-    mutable Hopper::rcg::ForceTransforms force_transforms;
+    mutable Robot::rcg::HomogeneousTransforms transforms;
+    mutable Robot::rcg::MotionTransforms motion_transforms;
+    mutable Robot::rcg::ForceTransforms force_transforms;
 
-    mutable Hopper::rcg::Jacobians jacobians;
-    mutable Hopper::rcg::InertiaProperties inertia_properties;
-    mutable Hopper::rcg::InverseDynamics inverse_dynamics;
-    mutable Hopper::rcg::JSIM jsim;
+    mutable Robot::rcg::Jacobians jacobians;
+    mutable Robot::rcg::InertiaProperties inertia_properties;
+    mutable Robot::rcg::InverseDynamics inverse_dynamics;
+    mutable Robot::rcg::JSIM jsim;
 
     const int num_iters;
     const Scalar dt;

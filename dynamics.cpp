@@ -7,7 +7,7 @@
 
 #include "dynamics.h"
 
-using namespace Hopper;
+using namespace Robot;
 
 namespace {
     using Scalar = Dynamics::Scalar;
@@ -28,8 +28,8 @@ Dynamics::Dynamics(const std::string& name, int num_iters, double dt, double mu,
         ad_torque_limit(torque_limit) {}
 
 std::tuple<Dynamics::JointState, Dynamics::JointState> Dynamics::step() const {
-    using ContactJacobian = Hopper::rcg::Matrix<3, joint_space_dims>;
-    using ContactJacobianTranspose = Hopper::rcg::Matrix<joint_space_dims, 3>;
+    using ContactJacobian = rcg::Matrix<3, joint_space_dims>;
+    using ContactJacobianTranspose = rcg::Matrix<joint_space_dims, 3>;
 
     JointState qm = q + u * dt / 2.0;
 
@@ -51,7 +51,7 @@ std::tuple<Dynamics::JointState, Dynamics::JointState> Dynamics::step() const {
     Matrix3 G = J * m_Jt;
     Vector3 c = J * u + J * m_h * dt;
 
-    G += Matrix3::Identity() * 0.1 * ScalarTraits::exp(12 * ScalarTraits::tanh(20 * d));
+    G += Matrix3::Identity() * 0.01 * ScalarTraits::exp(12 * ScalarTraits::tanh(100 * d));
     c += Vector3(0, 0, min(d / dt, Scalar(0)));
 
     Scalar r(0.1);
