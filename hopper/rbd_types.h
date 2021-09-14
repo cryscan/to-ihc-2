@@ -5,11 +5,10 @@
 #include <iit/rbd/scalar_traits.h>
 #include <iit/rbd/InertiaMatrix.h>
 
-#include <cppad/cg.hpp>
-#include "cppad.h"
+#include "../scalar_traits.h"
 
 namespace Hopper::rcg {
-    typedef typename iit::robcogen::ScalarTraits<CppAD::cg::ADCG<double>> ScalarTraits;
+    typedef typename ::CppADCodeGenTraits<double> ScalarTraits;
     typedef typename ScalarTraits::Scalar Scalar;
 
     typedef iit::rbd::Core<Scalar> TypesGen;

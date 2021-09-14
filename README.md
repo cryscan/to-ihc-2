@@ -55,16 +55,16 @@ To run the code, create a `in.txt` under the `build` folder with the following c
 
 ```
 # Iterations and defect_limit (unused)
-15 -1.0
+20 -1.0
 
 # Initial configuration
 -0.18 0.0 0.785 -1.57 0.0 0.0 0.0 0.0
 
 # Target configuration
-0.0 1.5 0.785 -1.57 0.0 0.0 0.0 0.0
+0.0 2.0 0.785 -1.57 0.0 0.0 0.0 0.0
 
 # Running cost
-0.01 0.1 1.0 1.0 0.01 0.01 0.01 0.01
+0.0 0.0 1.0 1.0 0.01 0.01 0.01 0.01
 0.01 0.01
 
 # Final cost

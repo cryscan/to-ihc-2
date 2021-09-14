@@ -75,7 +75,7 @@ protected:
 
     Hopper::rcg::Matrix<Eigen::Dynamic, 1> ad_x{input_dims};
     Hopper::rcg::Matrix<Eigen::Dynamic, 1> ad_y{output_dims};
-    CppAD::ADFun<Scalar::value_type> ad_fun;
+    CppAD::ADFun<ScalarTraits::ValueType> ad_fun;
 
     std::unique_ptr<CppAD::cg::DynamicLib<double>> lib;
     std::unique_ptr<CppAD::cg::GenericModel<double>> model;
