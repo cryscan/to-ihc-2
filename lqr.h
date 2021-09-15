@@ -40,7 +40,8 @@ struct LQR {
     [[nodiscard]] double total_cost() const;
     [[nodiscard]] double total_defect() const;
 
-    [[nodiscard]] double get_decrease_ratio() const;
+    [[nodiscard]] double get_decrease_ratio() const { return decrease_ratio; }
+    [[nodiscard]] double get_feedforward_gain() const { return feedforward_gain; }
 
     void print(std::ostream& os) const;
 
@@ -66,6 +67,7 @@ private:
     double delta;
 
     double decrease_ratio;
+    double feedforward_gain;
 
     mutable std::vector<Kinetics> vec_kinetics;
     mutable std::vector<Dynamics> vec_dynamics;

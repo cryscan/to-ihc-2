@@ -42,8 +42,6 @@ struct Dynamics : public ADBase<Dynamics, INPUT_DIMS, OUTPUT_DIMS> {
     [[nodiscard]] auto get_df_dx() const { return df_dx; }
     [[nodiscard]] auto get_df_du() const { return df_du; }
 
-    const double torque_limit;
-
 private:
     mutable Robot::rcg::HomogeneousTransforms transforms;
     mutable Robot::rcg::MotionTransforms motion_transforms;
@@ -57,7 +55,7 @@ private:
     const int num_iters;
     const Scalar dt;
     const Scalar mu;
-    const Scalar ad_torque_limit;
+    const Scalar torque_limit;
 
     JointState q, u;
     Action tau;

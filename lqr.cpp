@@ -108,6 +108,7 @@ void LQR::solve() {
     static const double mu_min = 1e-6;
 
     bool ok = true;
+    feedforward_gain = 0;
 
     do {
         for (int i = horizon - 1; i >= 0; --i) {
@@ -126,6 +127,9 @@ void LQR::solve() {
             Action d = k[i].rightCols<1>();
             Action q_u = q_ux_u.rightCols<1>();
             dv[i] << d.dot(q_u), 0.5 * d.dot(q_uu * d);
+
+            feedforward_gain += d.maxCoeff() / (u[i].norm() + 1);
+            feedforward_gain /= horizon;
 
             A a_bk = a[i] + b[i] * k[i];
             P kt_r_k = k[i].transpose() * r[i] * k[i];
@@ -278,10 +282,6 @@ double LQR::total_defect() const {
     for (int i = 0; i < horizon; ++i)
         d += a[i].topRightCorner<state_dims, 1>().squaredNorm();
     return d;
-}
-
-double LQR::get_decrease_ratio() const {
-    return decrease_ratio;
 }
 
 void LQR::print(std::ostream& os) const {

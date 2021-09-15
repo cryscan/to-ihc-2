@@ -24,8 +24,7 @@ Dynamics::Dynamics(const std::string& name, int num_iters, double dt, double mu,
         num_iters(num_iters),
         dt(dt),
         mu(mu),
-        torque_limit(torque_limit),
-        ad_torque_limit(torque_limit) {}
+        torque_limit(torque_limit) {}
 
 std::tuple<Dynamics::JointState, Dynamics::JointState> Dynamics::step() const {
     using ContactJacobian = rcg::Matrix<3, joint_space_dims>;
@@ -33,8 +32,8 @@ std::tuple<Dynamics::JointState, Dynamics::JointState> Dynamics::step() const {
 
     JointState qm = q + u * dt / 2.0;
 
-    JointState h, nle;
-    h << 0, 0, tau.unaryExpr([this](auto x) { return min(ad_torque_limit, max(-ad_torque_limit, x)); });
+    JointState h = JointState::Zero(), nle;
+    h.tail<action_dims>() = tau.unaryExpr([this](auto x) { return min(torque_limit, max(-torque_limit, x)); });
     inverse_dynamics.id(nle, qm, u, JointState::Zero());
     h -= nle;
 
@@ -51,7 +50,7 @@ std::tuple<Dynamics::JointState, Dynamics::JointState> Dynamics::step() const {
     Matrix3 G = J * m_Jt;
     Vector3 c = J * u + J * m_h * dt;
 
-    G += Matrix3::Identity() * 0.01 * ScalarTraits::exp(12 * ScalarTraits::tanh(100 * d));
+    G += Matrix3::Identity() * 0.1 * ScalarTraits::exp(12 * ScalarTraits::tanh(20 * d));
     c += Vector3(0, 0, min(d / dt, Scalar(0)));
 
     Scalar r(0.1);

@@ -117,11 +117,17 @@ int main() {
 
         std::cout << "iter " << i << ":\t"
                   << lqr.total_cost() << '\t'
-                  << lqr.get_decrease_ratio() << std::endl;
+                  << lqr.get_decrease_ratio() << '\t'
+                  << lqr.get_feedforward_gain() << std::endl;
 
         if (defect_limit < 0.0 || lqr.total_defect() < defect_limit) {
             std::fstream os("out.txt", std::ios::out | std::ios::trunc);
             lqr.print(os);
+        }
+
+        if (lqr.get_feedforward_gain() < 1e-4) {
+            std::cout << "Converged because feedforward gain goes to zero" << std::endl;
+            break;
         }
     }
 
