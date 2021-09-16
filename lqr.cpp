@@ -175,22 +175,8 @@ void LQR::update() {
             double expected = 0;
 
             for (int i = 0; i < horizon; ++i) {
-                ExtendedState z;
-                z << dx[i], 1.0;
-
-                K l = feedback(i, alpha);
-                du[i] = l * z;
-
-                ExtendedState dz = (a[i] + b[i] * l) * z;
-                dx[i + 1] = dz.head<state_dims>();
-
                 expected += alpha * (dv[i](0) + alpha * dv[i](1));
 
-                // x_[i] = x[i] + dx[i];
-                // u_[i] = u[i] + du[i];
-            }
-
-            for (int i = 0; i < horizon; ++i) {
                 // override by simulation
                 dx[i] = x_[i] - x[i];
 
