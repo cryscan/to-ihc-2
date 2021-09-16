@@ -126,7 +126,7 @@ int main() {
         }
 
         if (lqr.get_feedforward_gain() < 1e-4) {
-            std::cout << "Converged because feedforward gain goes to zero" << std::endl;
+            std::cout << "Converged" << std::endl;
             break;
         }
     }

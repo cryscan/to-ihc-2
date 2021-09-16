@@ -55,7 +55,7 @@ To run the code, create a `in.txt` under the `build` folder with the following c
 
 ```
 # Iterations and defect_limit (unused)
-20 -1.0
+50 -1.0
 
 # Initial configuration
 0.0 0.0 0.785 -1.57 0.0 0.0 0.0 0.0
@@ -64,11 +64,11 @@ To run the code, create a `in.txt` under the `build` folder with the following c
 0.0 1.0 0.785 -1.57 0.0 0.0 0.0 0.0
 
 # Running cost
-0.0 0.0 1.0 1.0 0.01 0.01 0.01 0.01
-0.01 0.01
+0.01 0.1 0.02 0.02 0.01 0.01 0.04 0.04
+0.001 0.001
 
 # Final cost
-10000.0 10000.0 100.0 100.0 1.0 1.0 1.0 1.0
+2000.0 800.0 400.0 400.0 2000.0 2000.0 2000.0 2000.0
 0.0 0.0
 
 # Horizon and initial trajectory file
