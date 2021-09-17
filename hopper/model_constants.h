@@ -19,7 +19,7 @@
  */
 
 namespace Hopper {
-namespace rcg {
+    namespace rcg {
 
 // Do not use 'constexpr' to allow for non-literal scalar types
 
@@ -27,10 +27,12 @@ namespace rcg {
         const Scalar tx_KFE = 0.30000001192092896;
         const Scalar tx_foot = 0.30000001192092896;
         const Scalar m_body = 2.4000000953674316;
+        const Scalar comx_body = 0.15000000596046448;
         const Scalar ix_body = 0.006500000134110451;
         const Scalar iy_body = 0.019999999552965164;
         const Scalar iz_body = 0.02250000089406967;
         const Scalar m_leg = 1.600000023841858;
+        const Scalar comx_leg = 0.15000000596046448;
         const Scalar ix_leg = 1.8000000272877514E-4;
         const Scalar iy_leg = 0.012090000323951244;
         const Scalar iz_leg = 0.012090000323951244;

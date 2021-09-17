@@ -5,7 +5,7 @@
 #include "transforms.h"
 
 namespace Hopper {
-namespace rcg {
+    namespace rcg {
 
 /** \name Center of mass calculation
  * Computes the Center Of Mass (COM) position of the whole robot, in

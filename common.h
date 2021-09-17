@@ -97,8 +97,11 @@ protected:
         c_source_gen.setCreateJacobian(true);
 
         ModelLibraryCSourceGen<double> library_c_source_gen(c_source_gen);
+        SaveFilesModelLibraryProcessor<double> save_files(library_c_source_gen);
         DynamicModelLibraryProcessor<double> processor(library_c_source_gen, name);
         GccCompiler<double> compiler;
+
+        save_files.saveSources();
 
         lib = processor.createDynamicLibrary(compiler);
         model = lib->model(name);

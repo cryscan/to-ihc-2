@@ -60,10 +60,12 @@ std::tuple<Dynamics::JointState, Dynamics::JointState> Dynamics::step() const {
     ContactInertia G = J * m_Jt;
     Percussion c = J * u + J * m_h * dt;
 
-    for (int i = 0; i < contact_dims; i += 3) {
-        Scalar d_ = d(i / 3);
-        G.diagonal().segment<3>(i) += Vector3::Ones() * 0.1 * ScalarTraits::exp(8 * ScalarTraits::tanh(20 * d_));
-        c.segment<3>(i) += Vector3(0, 0, min(d_ / dt, 0));
+    for (int i = 0; i < num_contacts; ++i) {
+        Scalar correction = 0.1 * ScalarTraits::exp(8 * ScalarTraits::tanh(20 * d(i)));
+        Scalar drift = min(d(i) / dt, 0);
+
+        G.diagonal().segment<3>(i * 3) += Vector3::Ones() * correction;
+        c.segment<3>(i * 3) += Vector3(0, 0, drift);
     }
 
     Scalar r = 0.1;
@@ -73,11 +75,8 @@ std::tuple<Dynamics::JointState, Dynamics::JointState> Dynamics::step() const {
 
     for (int k = 0; k < num_iters; ++k) {
         p -= r * (G * p + c);
-
-        for (int i = 0; i < contact_dims; i += 3) {
-            Vector3 p_ = p.segment<3>(i);
-            p.segment<3>(i) = prox(p_);
-        }
+        for (int i = 0; i < contact_dims; i += 3)
+            p.segment<3>(i) = prox(p.segment<3>(i));
     }
 
     JointState qe, ue;
