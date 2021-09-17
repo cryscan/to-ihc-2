@@ -4,25 +4,25 @@
 #include "rbd_types.h"
 
 namespace Hopper {
-    namespace rcg {
+namespace rcg {
 
-        struct Params_lengths {
-            Params_lengths() {
-                defaults();
-            }
-            void defaults() {
-            }
-        };
+    struct Params_lengths {
+        Params_lengths() {
+            defaults();
+        }
+        void defaults() {
+        }
+    };
 
-        struct Params_angles {
-            Params_angles() {
-                defaults();
-            }
-            void defaults() {
-            }
-        };
+    struct Params_angles {
+        Params_angles() {
+            defaults();
+        }
+        void defaults() {
+        }
+    };
 
 
-    }
+}
 }
 #endif

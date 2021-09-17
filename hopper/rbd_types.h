@@ -7,23 +7,27 @@
 
 #include "../scalar_traits.h"
 
-namespace Hopper::rcg {
-    typedef typename ::CppADCodeGenTraits<double> ScalarTraits;
-    typedef typename ScalarTraits::Scalar Scalar;
+namespace Hopper {
+    namespace rcg {
 
-    typedef iit::rbd::Core<Scalar> TypesGen;
-    typedef TypesGen::ForceVector Force;
-    typedef TypesGen::VelocityVector Velocity;
-    typedef TypesGen::VelocityVector Acceleration;
-    typedef TypesGen::Matrix66 Matrix66;
-    typedef TypesGen::Column6D Column6;
-    typedef TypesGen::Vector3 Vector3;
+        typedef typename ::CppADCodeGenTraits<double> ScalarTraits;
+        typedef typename ScalarTraits::Scalar Scalar;
 
-    template<int R, int C>
-    using Matrix = iit::rbd::PlainMatrix<Scalar, R, C>;
+        typedef iit::rbd::Core<Scalar> TypesGen;
+        typedef TypesGen::ForceVector Force;
+        typedef TypesGen::VelocityVector Velocity;
+        typedef TypesGen::VelocityVector Acceleration;
+        typedef TypesGen::Matrix66 Matrix66;
+        typedef TypesGen::Column6D Column6;
+        typedef TypesGen::Vector3 Vector3;
 
-    using InertiaMatrix = iit::rbd::InertiaMat<Scalar>;
+        template<int R, int C>
+        using Matrix = iit::rbd::PlainMatrix<Scalar, R, C>;
 
-    static const Scalar g = iit::rbd::g;
+        using InertiaMatrix = iit::rbd::InertiaMat<Scalar>;
+
+        static const Scalar g = iit::rbd::g;
+
+    }
 }
 #endif

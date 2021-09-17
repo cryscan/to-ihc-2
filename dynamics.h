@@ -13,10 +13,10 @@ template<>
 struct Parameter<Dynamics> {
     State x;
     Action u;
-    double d{0};
+    Contact d;
 };
 
-#define INPUT_DIMS  (state_dims + action_dims + 1)
+#define INPUT_DIMS  (state_dims + action_dims + num_contacts)
 #define OUTPUT_DIMS state_dims
 
 struct Dynamics : public ADBase<Dynamics, INPUT_DIMS, OUTPUT_DIMS> {
@@ -24,7 +24,7 @@ struct Dynamics : public ADBase<Dynamics, INPUT_DIMS, OUTPUT_DIMS> {
 
     using Base::Scalar;
     using Base::ScalarTraits;
-    using Base::JointState;
+    using Base::State;
     using Base::Action;
 
     using Base::input_dims;
@@ -59,9 +59,9 @@ private:
 
     JointState q, u;
     Action tau;
-    Scalar d;
+    Contact d;
 
-    State f;
+    ::State f;
     Eigen::Matrix<double, state_dims, state_dims, Eigen::RowMajor> df_dx;
     Eigen::Matrix<double, state_dims, action_dims, Eigen::RowMajor> df_du;
 

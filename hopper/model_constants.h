@@ -19,7 +19,7 @@
  */
 
 namespace Hopper {
-    namespace rcg {
+namespace rcg {
 
 // Do not use 'constexpr' to allow for non-literal scalar types
 

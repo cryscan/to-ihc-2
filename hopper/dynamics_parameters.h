@@ -2,7 +2,7 @@
 #define _HOPPER_RUNTIME_INERTIA_PARAMETERS_
 
 namespace Hopper {
-    namespace rcg {
+namespace rcg {
 
 /**
  * A container for the set of runtime inertia parameters of the robot
@@ -18,14 +18,14 @@ namespace Hopper {
  * as "inertia parameters". Do not confuse them. In RobCoGen, the parameters
  * are the non-constant values of the properties.
  */
-        struct RuntimeInertiaParams {
-            RuntimeInertiaParams() {
-                defaults();
-            }
-            void defaults() {
-            }
-        };
+    struct RuntimeInertiaParams {
+        RuntimeInertiaParams() {
+            defaults();
+        }
+        void defaults() {
+        }
+    };
 
-    }
+}
 }
 #endif

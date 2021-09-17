@@ -1,12 +1,76 @@
 #include "jacobians.h"
 
 Hopper::rcg::Jacobians::Jacobians()
-        : fr_u0_J_foot() {}
+        : fr_u0_J_body(),
+          fr_u0_J_knee(),
+          fr_u0_J_foot() {}
 
 void Hopper::rcg::Jacobians::updateParameters(const Params_lengths& _lengths, const Params_angles& _angles) {
     params.lengths = _lengths;
     params.angles = _angles;
     params.trig.update();
+}
+
+Hopper::rcg::Jacobians::Type_fr_u0_J_body::Type_fr_u0_J_body() {
+    (*this)(0, 0) = 0.0;
+    (*this)(0, 1) = 0.0;
+    (*this)(0, 2) = 0.0;
+    (*this)(1, 0) = 0.0;
+    (*this)(1, 1) = 0.0;
+    (*this)(1, 2) = -1.0;
+    (*this)(2, 0) = 0.0;
+    (*this)(2, 1) = 0.0;
+    (*this)(2, 2) = 0.0;
+    (*this)(3, 0) = 0.0;
+    (*this)(3, 1) = 1.0;
+    (*this)(3, 2) = 0.0;
+    (*this)(4, 0) = 0.0;
+    (*this)(4, 1) = 0.0;
+    (*this)(4, 2) = 0.0;
+    (*this)(5, 0) = 1.0;
+    (*this)(5, 1) = 0.0;
+    (*this)(5, 2) = 0.0;
+}
+
+const Hopper::rcg::Jacobians::Type_fr_u0_J_body&
+Hopper::rcg::Jacobians::Type_fr_u0_J_body::update(const JointState& q) {
+    return *this;
+}
+
+Hopper::rcg::Jacobians::Type_fr_u0_J_knee::Type_fr_u0_J_knee() {
+    (*this)(0, 0) = 0.0;
+    (*this)(0, 1) = 0.0;
+    (*this)(0, 2) = 0.0;
+    (*this)(0, 3) = 0.0;
+    (*this)(1, 0) = 0.0;
+    (*this)(1, 1) = 0.0;
+    (*this)(1, 2) = -1.0;
+    (*this)(1, 3) = -1.0;
+    (*this)(2, 0) = 0.0;
+    (*this)(2, 1) = 0.0;
+    (*this)(2, 2) = 0.0;
+    (*this)(2, 3) = 0.0;
+    (*this)(3, 0) = 0.0;
+    (*this)(3, 1) = 1.0;
+    (*this)(3, 3) = 0.0;
+    (*this)(4, 0) = 0.0;
+    (*this)(4, 1) = 0.0;
+    (*this)(4, 2) = 0.0;
+    (*this)(4, 3) = 0.0;
+    (*this)(5, 0) = 1.0;
+    (*this)(5, 1) = 0.0;
+    (*this)(5, 3) = 0.0;
+}
+
+const Hopper::rcg::Jacobians::Type_fr_u0_J_knee&
+Hopper::rcg::Jacobians::Type_fr_u0_J_knee::update(const JointState& q) {
+    Scalar sin_q_HFE = ScalarTraits::sin(q(HFE));
+    Scalar cos_q_HFE = ScalarTraits::cos(q(HFE));
+    Scalar sin_q_KFE = ScalarTraits::sin(q(KFE));
+    Scalar cos_q_KFE = ScalarTraits::cos(q(KFE));
+    (*this)(3, 2) = tx_KFE * cos_q_HFE;
+    (*this)(5, 2) = tx_KFE * sin_q_HFE;
+    return *this;
 }
 
 Hopper::rcg::Jacobians::Type_fr_u0_J_foot::Type_fr_u0_J_foot() {

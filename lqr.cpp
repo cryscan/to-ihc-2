@@ -77,7 +77,7 @@ void LQR::linearize() {
 
         dynamics.params.x = x[i];
         dynamics.params.u = u[i];
-        dynamics.params.d = kinetics.get_foot_pos().z();
+        dynamics.params.d << kinetics.get_body_pos().z(), kinetics.get_knee_pos().z(), kinetics.get_foot_pos().z();
         dynamics.Base::evaluate();
 
         // linearize the system around the new trajectory
@@ -192,7 +192,8 @@ void LQR::update() {
 
                 dynamics.params.x = x_[i];
                 dynamics.params.u = u_[i];
-                dynamics.params.d = kinetics.get_foot_pos().z();
+                dynamics.params.d
+                        << kinetics.get_body_pos().z(), kinetics.get_knee_pos().z(), kinetics.get_foot_pos().z();
 
                 dynamics.Base::evaluate(EvalOption::ZERO_ORDER);
                 x_[i + 1] = dynamics.get_f();

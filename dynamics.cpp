@@ -27,8 +27,10 @@ Dynamics::Dynamics(const std::string& name, int num_iters, double dt, double mu,
         torque_limit(torque_limit) {}
 
 std::tuple<Dynamics::JointState, Dynamics::JointState> Dynamics::step() const {
-    using ContactJacobian = rcg::Matrix<3, joint_space_dims>;
-    using ContactJacobianTranspose = rcg::Matrix<joint_space_dims, 3>;
+    using ContactJacobian = rcg::Matrix<contact_dims, joint_space_dims>;
+    using ContactJacobianTranspose = rcg::Matrix<joint_space_dims, contact_dims>;
+    using ContactInertia = rcg::Matrix<contact_dims, contact_dims>;
+    using Percussion = rcg::Matrix<contact_dims, 1>;
 
     JointState qm = q + u * dt / 2.0;
 
@@ -41,22 +43,42 @@ std::tuple<Dynamics::JointState, Dynamics::JointState> Dynamics::step() const {
     jsim.computeL();
     jsim.computeInverse();
 
-    ContactJacobian J = jacobians.fr_u0_J_foot(qm).bottomRows<3>();
+    // stack contact jacobians
+    ContactJacobian J;
+    {
+        Eigen::DenseIndex it = 0;
+        FILL_ROWS(J, jacobians.fr_u0_J_body(qm).bottomRows<3>(), it, 3)
+        FILL_ROWS(J, jacobians.fr_u0_J_knee(qm).bottomRows<3>(), it, 3)
+        FILL_ROWS(J, jacobians.fr_u0_J_foot(qm).bottomRows<3>(), it, 3)
+    }
+
     JointState m_h = jsim.getInverse() * h;
     ContactJacobianTranspose m_Jt = jsim.getInverse() * J.transpose();
 
-    Vector3 p = Vector3::Zero();
+    Percussion p = Percussion::Zero();
 
-    Matrix3 G = J * m_Jt;
-    Vector3 c = J * u + J * m_h * dt;
+    ContactInertia G = J * m_Jt;
+    Percussion c = J * u + J * m_h * dt;
 
-    G += Matrix3::Identity() * 0.01 * ScalarTraits::exp(15 * ScalarTraits::tanh(100 * d));
-    c += Vector3(0, 0, min(d / dt, Scalar(0)));
+    for (int i = 0; i < contact_dims; i += 3) {
+        Scalar d_ = d(i / 3);
+        G.diagonal().segment<3>(i) += Vector3::Ones() * 0.1 * ScalarTraits::exp(8 * ScalarTraits::tanh(20 * d_));
+        c.segment<3>(i) += Vector3(0, 0, min(d_ / dt, 0));
+    }
 
-    Scalar r(0.1);
-    p << 0, 0, inertia_properties.getTotalMass() * rcg::g * dt;
-    for (int i = 0; i < num_iters; ++i)
-        p = prox(p - r * (G * p + c));
+    Scalar r = 0.1;
+
+    // init percussion
+    p = Vector3(0, 0, inertia_properties.getTotalMass() * rcg::g * dt).replicate<num_contacts, 1>();
+
+    for (int k = 0; k < num_iters; ++k) {
+        p -= r * (G * p + c);
+
+        for (int i = 0; i < contact_dims; i += 3) {
+            Vector3 p_ = p.segment<3>(i);
+            p.segment<3>(i) = prox(p_);
+        }
+    }
 
     JointState qe, ue;
     ue = u + m_h * dt + m_Jt * p;
@@ -79,7 +101,7 @@ void Dynamics::build_map() {
     ASSIGN_VECTOR(q, ad_x, it, joint_space_dims)
     ASSIGN_VECTOR(u, ad_x, it, joint_space_dims)
     ASSIGN_VECTOR(tau, ad_x, it, action_dims)
-    d = ad_x(it);
+    ASSIGN_VECTOR(d, ad_x, it, num_contacts)
 
     std::tie(q, u) = step();
 

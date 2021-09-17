@@ -34,12 +34,12 @@ void Kinetics::evaluate(const ADBase::Params& params, EvalOption option) {
 }
 
 Kinetics::Vector3 Kinetics::compute_body_pos() const {
-    Affine3 body(transforms.fr_u0_X_fr_body(q));
+    Affine3 body(transforms.fr_u0_X_body(q));
     return body.translation();
 }
 
 Kinetics::Vector3 Kinetics::compute_knee_pos() const {
-    Affine3 knee(transforms.fr_u0_X_fr_leg(q));
+    Affine3 knee(transforms.fr_u0_X_knee(q));
     return knee.translation();
 }
 

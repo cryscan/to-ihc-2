@@ -24,13 +24,11 @@ struct Cost : public ADBase<Cost, INPUT_DIMS, OUTPUT_DIMS> {
 
     using Base::Scalar;
     using Base::ScalarTraits;
-    using Base::JointState;
+    using Base::State;
     using Base::Action;
 
     using Base::input_dims;
     using Base::output_dims;
-
-    using State = Robot::rcg::Matrix<state_dims, 1>;
 
     template<typename StateVector, typename ActionVector>
     Cost(const std::string& name,

@@ -2,9 +2,8 @@
 
 #include "inverse_dynamics.h"
 #include "inertia_properties.h"
-
 #ifndef EIGEN_NO_DEBUG
-#include <iostream>
+    #include <iostream>
 #endif
 using namespace std;
 using namespace iit::rbd;

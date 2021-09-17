@@ -5,8 +5,8 @@ using namespace Hopper::rcg;
 // Constructors
 
 MotionTransforms::MotionTransforms()
-        : fr_u0_X_fr_body(),
-          fr_u0_X_fr_leg(),
+        : fr_u0_X_body(),
+          fr_u0_X_knee(),
           fr_u0_X_foot(),
           fr_u0_X_fr_BH(),
           fr_u0_X_fr_BX(),
@@ -27,8 +27,8 @@ void MotionTransforms::updateParams(const Params_lengths& v_lengths, const Param
 }
 
 ForceTransforms::ForceTransforms()
-        : fr_u0_X_fr_body(),
-          fr_u0_X_fr_leg(),
+        : fr_u0_X_body(),
+          fr_u0_X_knee(),
           fr_u0_X_foot(),
           fr_u0_X_fr_BH(),
           fr_u0_X_fr_BX(),
@@ -49,8 +49,8 @@ void ForceTransforms::updateParams(const Params_lengths& v_lengths, const Params
 }
 
 HomogeneousTransforms::HomogeneousTransforms()
-        : fr_u0_X_fr_body(),
-          fr_u0_X_fr_leg(),
+        : fr_u0_X_body(),
+          fr_u0_X_knee(),
           fr_u0_X_foot(),
           fr_u0_X_fr_BH(),
           fr_u0_X_fr_BX(),
@@ -70,7 +70,7 @@ void HomogeneousTransforms::updateParams(const Params_lengths& v_lengths, const 
     params.trig.update();
 }
 
-MotionTransforms::Type_fr_u0_X_fr_body::Type_fr_u0_X_fr_body() {
+MotionTransforms::Type_fr_u0_X_body::Type_fr_u0_X_body() {
     (*this)(0, 2) = 0.0;
     (*this)(0, 3) = 0.0;
     (*this)(0, 4) = 0.0;
@@ -97,7 +97,7 @@ MotionTransforms::Type_fr_u0_X_fr_body::Type_fr_u0_X_fr_body() {
     (*this)(5, 5) = 0.0;
 }
 
-const MotionTransforms::Type_fr_u0_X_fr_body& MotionTransforms::Type_fr_u0_X_fr_body::update(const state_t& q) {
+const MotionTransforms::Type_fr_u0_X_body& MotionTransforms::Type_fr_u0_X_body::update(const state_t& q) {
     Scalar sin_q_HFE = ScalarTraits::sin(q(HFE));
     Scalar cos_q_HFE = ScalarTraits::cos(q(HFE));
     (*this)(0, 0) = sin_q_HFE;
@@ -114,7 +114,7 @@ const MotionTransforms::Type_fr_u0_X_fr_body& MotionTransforms::Type_fr_u0_X_fr_
     (*this)(5, 4) = sin_q_HFE;
     return *this;
 }
-MotionTransforms::Type_fr_u0_X_fr_leg::Type_fr_u0_X_fr_leg() {
+MotionTransforms::Type_fr_u0_X_knee::Type_fr_u0_X_knee() {
     (*this)(0, 2) = 0.0;
     (*this)(0, 3) = 0.0;
     (*this)(0, 4) = 0.0;
@@ -141,7 +141,7 @@ MotionTransforms::Type_fr_u0_X_fr_leg::Type_fr_u0_X_fr_leg() {
     (*this)(5, 5) = 0.0;
 }
 
-const MotionTransforms::Type_fr_u0_X_fr_leg& MotionTransforms::Type_fr_u0_X_fr_leg::update(const state_t& q) {
+const MotionTransforms::Type_fr_u0_X_knee& MotionTransforms::Type_fr_u0_X_knee::update(const state_t& q) {
     Scalar sin_q_HFE = ScalarTraits::sin(q(HFE));
     Scalar cos_q_HFE = ScalarTraits::cos(q(HFE));
     Scalar sin_q_KFE = ScalarTraits::sin(q(KFE));
@@ -728,7 +728,7 @@ const MotionTransforms::Type_fr_body_X_fr_leg& MotionTransforms::Type_fr_body_X_
     return *this;
 }
 
-ForceTransforms::Type_fr_u0_X_fr_body::Type_fr_u0_X_fr_body() {
+ForceTransforms::Type_fr_u0_X_body::Type_fr_u0_X_body() {
     (*this)(0, 2) = 0.0;
     (*this)(0, 3) = 0.0;
     (*this)(0, 4) = 0.0;
@@ -755,7 +755,7 @@ ForceTransforms::Type_fr_u0_X_fr_body::Type_fr_u0_X_fr_body() {
     (*this)(5, 5) = 0.0;
 }
 
-const ForceTransforms::Type_fr_u0_X_fr_body& ForceTransforms::Type_fr_u0_X_fr_body::update(const state_t& q) {
+const ForceTransforms::Type_fr_u0_X_body& ForceTransforms::Type_fr_u0_X_body::update(const state_t& q) {
     Scalar sin_q_HFE = ScalarTraits::sin(q(HFE));
     Scalar cos_q_HFE = ScalarTraits::cos(q(HFE));
     (*this)(0, 0) = sin_q_HFE;
@@ -772,7 +772,7 @@ const ForceTransforms::Type_fr_u0_X_fr_body& ForceTransforms::Type_fr_u0_X_fr_bo
     (*this)(5, 4) = sin_q_HFE;
     return *this;
 }
-ForceTransforms::Type_fr_u0_X_fr_leg::Type_fr_u0_X_fr_leg() {
+ForceTransforms::Type_fr_u0_X_knee::Type_fr_u0_X_knee() {
     (*this)(0, 2) = 0.0;
     (*this)(0, 3) = 0.0;
     (*this)(0, 4) = 0.0;
@@ -799,7 +799,7 @@ ForceTransforms::Type_fr_u0_X_fr_leg::Type_fr_u0_X_fr_leg() {
     (*this)(5, 5) = 0.0;
 }
 
-const ForceTransforms::Type_fr_u0_X_fr_leg& ForceTransforms::Type_fr_u0_X_fr_leg::update(const state_t& q) {
+const ForceTransforms::Type_fr_u0_X_knee& ForceTransforms::Type_fr_u0_X_knee::update(const state_t& q) {
     Scalar sin_q_HFE = ScalarTraits::sin(q(HFE));
     Scalar cos_q_HFE = ScalarTraits::cos(q(HFE));
     Scalar sin_q_KFE = ScalarTraits::sin(q(KFE));
@@ -1386,7 +1386,7 @@ const ForceTransforms::Type_fr_body_X_fr_leg& ForceTransforms::Type_fr_body_X_fr
     return *this;
 }
 
-HomogeneousTransforms::Type_fr_u0_X_fr_body::Type_fr_u0_X_fr_body() {
+HomogeneousTransforms::Type_fr_u0_X_body::Type_fr_u0_X_body() {
     (*this)(0, 2) = 0.0;
     (*this)(1, 0) = 0.0;
     (*this)(1, 1) = 0.0;
@@ -1399,8 +1399,7 @@ HomogeneousTransforms::Type_fr_u0_X_fr_body::Type_fr_u0_X_fr_body() {
     (*this)(3, 3) = 1.0;
 }
 
-const HomogeneousTransforms::Type_fr_u0_X_fr_body&
-HomogeneousTransforms::Type_fr_u0_X_fr_body::update(const state_t& q) {
+const HomogeneousTransforms::Type_fr_u0_X_body& HomogeneousTransforms::Type_fr_u0_X_body::update(const state_t& q) {
     Scalar sin_q_HFE = ScalarTraits::sin(q(HFE));
     Scalar cos_q_HFE = ScalarTraits::cos(q(HFE));
     (*this)(0, 0) = sin_q_HFE;
@@ -1411,7 +1410,7 @@ HomogeneousTransforms::Type_fr_u0_X_fr_body::update(const state_t& q) {
     (*this)(2, 3) = q(BH) + tz_BH;
     return *this;
 }
-HomogeneousTransforms::Type_fr_u0_X_fr_leg::Type_fr_u0_X_fr_leg() {
+HomogeneousTransforms::Type_fr_u0_X_knee::Type_fr_u0_X_knee() {
     (*this)(0, 2) = 0.0;
     (*this)(1, 0) = 0.0;
     (*this)(1, 1) = 0.0;
@@ -1424,7 +1423,7 @@ HomogeneousTransforms::Type_fr_u0_X_fr_leg::Type_fr_u0_X_fr_leg() {
     (*this)(3, 3) = 1.0;
 }
 
-const HomogeneousTransforms::Type_fr_u0_X_fr_leg& HomogeneousTransforms::Type_fr_u0_X_fr_leg::update(const state_t& q) {
+const HomogeneousTransforms::Type_fr_u0_X_knee& HomogeneousTransforms::Type_fr_u0_X_knee::update(const state_t& q) {
     Scalar sin_q_HFE = ScalarTraits::sin(q(HFE));
     Scalar cos_q_HFE = ScalarTraits::cos(q(HFE));
     Scalar sin_q_KFE = ScalarTraits::sin(q(KFE));
