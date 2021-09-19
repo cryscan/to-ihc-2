@@ -27,11 +27,6 @@ Dynamics::Dynamics(const std::string& name, int num_iters, double dt, double mu,
         torque_limit(torque_limit) {}
 
 std::tuple<Dynamics::JointState, Dynamics::JointState> Dynamics::step() const {
-    using ContactJacobian = rcg::Matrix<contact_dims, joint_space_dims>;
-    using ContactJacobianTranspose = rcg::Matrix<joint_space_dims, contact_dims>;
-    using ContactInertia = rcg::Matrix<contact_dims, contact_dims>;
-    using Percussion = rcg::Matrix<contact_dims, 1>;
-
     JointState qm = q + u * dt / 2.0;
 
     JointState h = JointState::Zero(), nle;
@@ -39,18 +34,28 @@ std::tuple<Dynamics::JointState, Dynamics::JointState> Dynamics::step() const {
     inverse_dynamics.id(nle, qm, u, JointState::Zero());
     h -= nle;
 
-    jsim.update(qm);
-    jsim.computeL();
-    jsim.computeInverse();
+    auto[m_h, m_Jt_p] = contact(qm, h);
+
+    JointState qe, ue;
+    ue = u + m_h * dt + m_Jt_p;
+    qe = q + (u + ue) * dt / 2.0;
+
+    return {qe, ue};
+}
+
+std::tuple<Dynamics::JointState, Dynamics::JointState>
+Dynamics::contact(const JointState& qm, const JointState& h) const {
+    Eigen::DenseIndex it = 0;
 
     // stack contact jacobians
     ContactJacobian J;
-    {
-        Eigen::DenseIndex it = 0;
-        FILL_ROWS(J, jacobians.fr_u0_J_body(qm).bottomRows<3>(), it, 3)
-        FILL_ROWS(J, jacobians.fr_u0_J_knee(qm).bottomRows<3>(), it, 3)
-        FILL_ROWS(J, jacobians.fr_u0_J_foot(qm).bottomRows<3>(), it, 3)
-    }
+    FILL_ROWS(J, jacobians.fr_u0_J_body(qm).bottomRows<3>(), it, 3)
+    FILL_ROWS(J, jacobians.fr_u0_J_knee(qm).bottomRows<3>(), it, 3)
+    FILL_ROWS(J, jacobians.fr_u0_J_foot(qm).bottomRows<3>(), it, 3)
+
+    jsim.update(qm);
+    jsim.computeL();
+    jsim.computeInverse();
 
     JointState m_h = jsim.getInverse() * h;
     ContactJacobianTranspose m_Jt = jsim.getInverse() * J.transpose();
@@ -60,12 +65,15 @@ std::tuple<Dynamics::JointState, Dynamics::JointState> Dynamics::step() const {
     ContactInertia G = J * m_Jt;
     Percussion c = J * u + J * m_h * dt;
 
+    it = 0;
     for (int i = 0; i < num_contacts; ++i) {
         Scalar correction = 0.1 * ScalarTraits::exp(8 * ScalarTraits::tanh(20 * d(i)));
         Scalar drift = min(d(i) / dt, 0);
 
-        G.diagonal().segment<3>(i * 3) += Vector3::Ones() * correction;
-        c.segment<3>(i * 3) += Vector3(0, 0, drift);
+        G.diagonal().segment<3>(it) += Vector3::Ones() * correction;
+        c.segment<3>(it) += Vector3(0, 0, drift);
+
+        it += 3;
     }
 
     Scalar r = 0.1;
@@ -79,11 +87,7 @@ std::tuple<Dynamics::JointState, Dynamics::JointState> Dynamics::step() const {
             p.segment<3>(i) = prox(p.segment<3>(i));
     }
 
-    JointState qe, ue;
-    ue = u + m_h * dt + m_Jt * p;
-    qe = q + (u + ue) * dt / 2.0;
-
-    return {qe, ue};
+    return {m_h, m_Jt * p};
 }
 
 Dynamics::Vector3 Dynamics::prox(const Dynamics::Vector3& p) const {

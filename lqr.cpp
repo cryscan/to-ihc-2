@@ -128,7 +128,7 @@ void LQR::solve() {
             Action q_u = q_ux_u.rightCols<1>();
             dv[i] << d.dot(q_u), 0.5 * d.dot(q_uu * d);
 
-            feedforward_gain += d.maxCoeff() / (u[i].norm() + 1);
+            feedforward_gain += d.cwiseAbs().maxCoeff() / (u[i].norm() + 1);
             feedforward_gain /= horizon;
 
             A a_bk = a[i] + b[i] * k[i];

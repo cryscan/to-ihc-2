@@ -40,5 +40,5 @@ def animate(i):
 
 
 ani = animation.FuncAnimation(fig, animate, len(states), interval=dt * 1000, blit=True)
-# ani.save("animation.mp4")
+ani.save("animation.mp4")
 plt.show()

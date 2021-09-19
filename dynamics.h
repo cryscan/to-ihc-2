@@ -33,6 +33,11 @@ struct Dynamics : public ADBase<Dynamics, INPUT_DIMS, OUTPUT_DIMS> {
     using Vector3 = Robot::rcg::Vector3;
     using Matrix3 = Robot::rcg::Matrix<3, 3>;
 
+    using ContactJacobian = Robot::rcg::Matrix<contact_dims, joint_space_dims>;
+    using ContactJacobianTranspose = Robot::rcg::Matrix<joint_space_dims, contact_dims>;
+    using ContactInertia = Robot::rcg::Matrix<contact_dims, contact_dims>;
+    using Percussion = Robot::rcg::Matrix<contact_dims, 1>;
+
     Dynamics(const std::string& name, int num_iters, double dt, double mu, double torque_limit);
 
     void build_map() override;
@@ -42,7 +47,7 @@ struct Dynamics : public ADBase<Dynamics, INPUT_DIMS, OUTPUT_DIMS> {
     [[nodiscard]] auto get_df_dx() const { return df_dx; }
     [[nodiscard]] auto get_df_du() const { return df_du; }
 
-private:
+protected:
     mutable Robot::rcg::HomogeneousTransforms transforms;
     mutable Robot::rcg::MotionTransforms motion_transforms;
     mutable Robot::rcg::ForceTransforms force_transforms;
@@ -65,8 +70,9 @@ private:
     Eigen::Matrix<double, state_dims, state_dims, Eigen::RowMajor> df_dx;
     Eigen::Matrix<double, state_dims, action_dims, Eigen::RowMajor> df_du;
 
-    inline std::tuple<JointState, JointState> step() const;
-    inline Vector3 prox(const Vector3& p) const;
+    std::tuple<JointState, JointState> step() const;
+    std::tuple<JointState, JointState> contact(const JointState& qm, const JointState& h) const;
+    Vector3 prox(const Vector3& p) const;
 };
 
 #undef INPUT_DIMS
