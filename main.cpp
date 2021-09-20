@@ -75,7 +75,7 @@ auto make_lqr(std::istream& is,
 
     interval = horizon;
 
-    LQR lqr(horizon, interval, {1.0, 0.5, 0.25, 0.125}, 4, kinetics, dynamics, cost, cost_final);
+    LQR lqr(horizon, interval, {1.0, 0.5, 0.25, 0.125}, 2, kinetics, dynamics, cost, cost_final);
 
     std::ifstream fs(init_file);
     auto[x, u] = read_init_trajectory(fs);
@@ -90,8 +90,8 @@ int main() {
     int num_iters;
     is >> num_iters;
 
-    double defect_limit;
-    is >> defect_limit;
+    double feedforward_gain_limit;
+    is >> feedforward_gain_limit;
 
     Kinetics kinetics("kinetics");
     auto dynamics = make_dynamics(is);
@@ -120,12 +120,12 @@ int main() {
                   << lqr.get_decrease_ratio() << '\t'
                   << lqr.get_feedforward_gain() << std::endl;
 
-        if (defect_limit < 0.0 || lqr.total_defect() < defect_limit) {
+        {
             std::fstream os("out.txt", std::ios::out | std::ios::trunc);
             lqr.print(os);
         }
 
-        if (lqr.get_feedforward_gain() < 1e-4) {
+        if (lqr.get_feedforward_gain() < feedforward_gain_limit) {
             std::cout << "Converged" << std::endl;
             break;
         }

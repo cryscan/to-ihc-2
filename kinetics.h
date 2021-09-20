@@ -14,10 +14,7 @@ struct Parameter<Kinetics> {
     State x;
 };
 
-#define INPUT_DIMS  (state_dims)
-#define OUTPUT_DIMS 9
-
-struct Kinetics : public ADBase<Kinetics, INPUT_DIMS, OUTPUT_DIMS> {
+struct Kinetics : public ADBase<Kinetics, state_dims, 9> {
     using Base = decltype(base_type())::type;
 
     using Base::Scalar;
@@ -53,8 +50,5 @@ private:
     inline Vector3 compute_knee_pos() const;
     inline Vector3 compute_foot_pos() const;
 };
-
-#undef INPUT_DIMS
-#undef OUTPUT_DIMS
 
 #endif //TO_IHC_2_KINETICS_H

@@ -19,6 +19,7 @@ namespace {
 
 Dynamics::Dynamics(const std::string& name, int num_iters, double dt, double mu, double torque_limit) :
         Base(name),
+        ContactBase(jacobians, inertia_properties),
         inverse_dynamics(inertia_properties, motion_transforms),
         jsim(inertia_properties, force_transforms),
         num_iters(num_iters),
@@ -29,12 +30,7 @@ Dynamics::Dynamics(const std::string& name, int num_iters, double dt, double mu,
 std::tuple<Dynamics::JointState, Dynamics::JointState> Dynamics::step() const {
     JointState qm = q + u * dt / 2.0;
 
-    JointState h = JointState::Zero(), nle;
-    h.tail<action_dims>() = tau.unaryExpr([this](auto x) { return min(torque_limit, max(-torque_limit, x)); });
-    inverse_dynamics.id(nle, qm, u, JointState::Zero());
-    h -= nle;
-
-    auto[m_h, m_Jt_p] = contact(qm, h);
+    auto[m_h, m_Jt_p] = contact(qm);
 
     JointState qe, ue;
     ue = u + m_h * dt + m_Jt_p;
@@ -44,14 +40,9 @@ std::tuple<Dynamics::JointState, Dynamics::JointState> Dynamics::step() const {
 }
 
 std::tuple<Dynamics::JointState, Dynamics::JointState>
-Dynamics::contact(const JointState& qm, const JointState& h) const {
-    Eigen::DenseIndex it = 0;
-
-    // stack contact jacobians
-    ContactJacobian J;
-    FILL_ROWS(J, jacobians.fr_u0_J_body(qm).bottomRows<3>(), it, 3)
-    FILL_ROWS(J, jacobians.fr_u0_J_knee(qm).bottomRows<3>(), it, 3)
-    FILL_ROWS(J, jacobians.fr_u0_J_foot(qm).bottomRows<3>(), it, 3)
+Dynamics::contact(const JointState& qm) const {
+    auto h = nonlinear_terms(qm);
+    auto J = contact_jacobian(qm);
 
     jsim.update(qm);
     jsim.computeL();
@@ -60,41 +51,30 @@ Dynamics::contact(const JointState& qm, const JointState& h) const {
     JointState m_h = jsim.getInverse() * h;
     ContactJacobianTranspose m_Jt = jsim.getInverse() * J.transpose();
 
-    Percussion p = Percussion::Zero();
-
     ContactInertia G = J * m_Jt;
     Percussion c = J * u + J * m_h * dt;
 
-    it = 0;
+    Eigen::DenseIndex it = 0;
     for (int i = 0; i < num_contacts; ++i) {
-        Scalar correction = 0.1 * ScalarTraits::exp(8 * ScalarTraits::tanh(20 * d(i)));
-        Scalar drift = min(d(i) / dt, 0);
-
-        G.diagonal().segment<3>(it) += Vector3::Ones() * correction;
-        c.segment<3>(it) += Vector3(0, 0, drift);
-
+        G.diagonal().segment<3>(it) += Vector3::Ones() * 0.1 * ScalarTraits::exp(8 * ScalarTraits::tanh(20 * d(i)));
+        c.segment<3>(it) += Vector3(0, 0, min(d(i) / dt, 0));
         it += 3;
     }
 
-    Scalar r = 0.1;
-
-    // init percussion
-    p = Vector3(0, 0, inertia_properties.getTotalMass() * rcg::g * dt).replicate<num_contacts, 1>();
-
-    for (int k = 0; k < num_iters; ++k) {
-        p -= r * (G * p + c);
-        for (int i = 0; i < contact_dims; i += 3)
-            p.segment<3>(i) = prox(p.segment<3>(i));
-    }
+    auto p = solve_percussion(G, c, dt, mu, num_iters);
 
     return {m_h, m_Jt * p};
 }
 
-Dynamics::Vector3 Dynamics::prox(const Dynamics::Vector3& p) const {
-    auto pn = max(Scalar(0), p(2));
-    auto px = min(mu * pn, max(-mu * pn, p(0)));
-    auto py = min(mu * pn, max(-mu * pn, p(1)));
-    return {px, py, pn};
+Dynamics::JointState Dynamics::nonlinear_terms(const Dynamics::JointState& qm) const {
+    JointState h = JointState::Zero(), nle;
+    Action saturated_tau = tau.unaryExpr([this](auto x) { return min(torque_limit, max(-torque_limit, x)); });
+
+    h.tail<action_dims>() = saturated_tau;
+    inverse_dynamics.id(nle, qm, u, JointState::Zero());
+    h -= nle;
+
+    return h;
 }
 
 void Dynamics::build_map() {
@@ -125,17 +105,60 @@ void Dynamics::evaluate(const Params& params, EvalOption option) {
     Eigen::VectorXd y(output_dims);
 
     x << params.x, params.u, params.d;
-
     y = model->ForwardZero(x);
+
     Eigen::DenseIndex it = 0;
     ASSIGN_VECTOR(f, y, it, state_dims)
 
     if (option == EvalOption::FIRST_ORDER) {
-        Jacobian jac(output_dims, input_dims);
-        JACOBIAN_VIEW(jac) = model->Jacobian(x);
+        Jacobian jacobian(output_dims, input_dims);
+        JACOBIAN_VIEW(jacobian) = model->Jacobian(x);
+        jacobian = jacobian.topRows<state_dims>();
+
         it = 0;
-        jac = jac.topRows<state_dims>();
-        ASSIGN_COLS(df_dx, jac, it, state_dims)
-        ASSIGN_COLS(df_du, jac, it, action_dims)
+        ASSIGN_COLS(df_dx, jacobian, it, state_dims)
+        ASSIGN_COLS(df_du, jacobian, it, action_dims)
     }
+}
+
+ContactBase::ContactBase(rcg::Jacobians& jacobians, rcg::InertiaProperties& inertia_properties) :
+        jacobians(jacobians),
+        inertia_properties(inertia_properties) {}
+
+ContactBase::ContactJacobian ContactBase::contact_jacobian(const ContactBase::JointState& q) const {
+    ContactJacobian J;
+
+    Eigen::DenseIndex it = 0;
+    FILL_ROWS(J, jacobians.fr_u0_J_body(q).bottomRows<3>(), it, 3)
+    FILL_ROWS(J, jacobians.fr_u0_J_knee(q).bottomRows<3>(), it, 3)
+    FILL_ROWS(J, jacobians.fr_u0_J_foot(q).bottomRows<3>(), it, 3)
+
+    return J;
+}
+
+ContactBase::Percussion
+ContactBase::solve_percussion(const ContactBase::ContactInertia& G,
+                              const ContactBase::Percussion& c,
+                              const ContactBase::Scalar& dt,
+                              const ContactBase::Scalar& mu,
+                              int num_iters) const {
+    Vector3 stable_percussion(0, 0, inertia_properties.getTotalMass() * rcg::g * dt);
+    Percussion p = stable_percussion.replicate<num_contacts, 1>();
+
+    Scalar r = 0.1;
+    for (int k = 0; k < num_iters; ++k) {
+        p -= r * (G * p + c);
+        for (int i = 0; i < contact_dims; i += 3)
+            p.segment<3>(i) = prox(p.segment<3>(i), mu);
+    }
+
+    return p;
+}
+
+ContactBase::Vector3 ContactBase::prox(const ContactBase::Vector3& p,
+                                       const ContactBase::Scalar& mu) {
+    auto pn = max(Scalar(0), p(2));
+    auto px = min(mu * pn, max(-mu * pn, p(0)));
+    auto py = min(mu * pn, max(-mu * pn, p(1)));
+    return {px, py, pn};
 }

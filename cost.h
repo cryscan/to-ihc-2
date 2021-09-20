@@ -15,10 +15,7 @@ struct Parameter<Cost> {
     Action u;
 };
 
-#define INPUT_DIMS  (state_dims + state_dims + action_dims)
-#define OUTPUT_DIMS 1
-
-struct Cost : public ADBase<Cost, INPUT_DIMS, OUTPUT_DIMS> {
+struct Cost : public ADBase<Cost, state_dims + state_dims + action_dims, 1> {
     using Base = decltype(base_type())::type;
     using Base::Params;
 
@@ -68,8 +65,5 @@ private:
 
     [[nodiscard]] Scalar cost() const;
 };
-
-#undef INPUT_DIMS
-#undef OUTPUT_DIMS
 
 #endif //TO_IHC_2_COST_H
