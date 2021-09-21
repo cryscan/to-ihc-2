@@ -54,21 +54,21 @@ $ make
 To run the code, create a `in.txt` under the `build` folder with the following contents:
 
 ```
-# Iterations and defect_limit (unused)
-50 -1.0
+# Iterations and minimum feedforward gain
+100 0.001
 
 # Initial configuration
 0.0 0.0 0.785 -1.57 0.0 0.0 0.0 0.0
 
 # Target configuration
-0.0 1.0 0.785 -1.57 0.0 0.0 0.0 0.0
+-0.175 1.0 0.785 -1.57 0.0 0.0 0.0 0.0
 
 # Running cost
-0.01 0.1 0.02 0.02 0.01 0.01 0.04 0.04
+0.01 0.0 0.02 0.02 0.0 0.0 0.04 0.04
 0.001 0.001
 
 # Final cost
-2000.0 800.0 400.0 400.0 2000.0 2000.0 2000.0 2000.0
+800.0 2000.0 400.0 400.0 200.0 200.0 200.0 200.0
 0.0 0.0
 
 # Horizon and initial trajectory file

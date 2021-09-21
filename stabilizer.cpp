@@ -4,30 +4,45 @@
 
 #include "stabilizer.h"
 
-Stabilizer::Stabilizer(const std::string& name) :
-        ADBase(name),
-        ContactBase(jacobians, inertia_properties),
-        inverse_dynamics(inertia_properties, motion_transforms),
-        jsim(inertia_properties, force_transforms) {}
+using namespace Robot;
 
 void Stabilizer::build_map() {
     CppAD::Independent(ad_x);
 
     Eigen::DenseIndex it = 0;
-    ASSIGN_VECTOR(x, ad_x, it, state_dims)
-    ASSIGN_VECTOR(x_star, ad_x, it, state_dims)
+    ASSIGN_VECTOR(q, ad_x, it, joint_space_dims)
+    ASSIGN_VECTOR(u, ad_x, it, joint_space_dims)
+    ASSIGN_VECTOR(q_star, ad_x, it, joint_space_dims)
     ASSIGN_VECTOR(d, ad_x, it, num_contacts)
+
+    ad_y = pd();
 
     ad_fun.Dependent(ad_x, ad_y);
     ad_fun.optimize("no_compare_op");
 }
 
 void Stabilizer::evaluate(const Base::Params& params, EvalOption option) {
-    Eigen::VectorXd x0(input_dims);
+    Eigen::VectorXd x(input_dims);
     Eigen::VectorXd y(output_dims);
 
-    x0 << params.x, params.x_star, params.d;
-    y = model->ForwardZero(x0);
+    x << params.x, params.q_star, params.d;
+    y = model->ForwardZero(x);
 
     f = y;
+}
+
+Stabilizer::Action Stabilizer::pd() const {
+    State dx;
+    dx << q_star - q, -u;
+    dx = dx.cwiseProduct(pd_scale);
+
+    JointState dq = dx.head<joint_space_dims>();
+    JointState du = dx.tail<joint_space_dims>();
+
+    return dq.tail<action_dims>() + du.tail<action_dims>();
+}
+
+Stabilizer::Action Stabilizer::id() const {
+    ContactJacobianTranspose Jt = contact_jacobian(q).transpose();
+    return Action::Zero();
 }

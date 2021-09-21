@@ -24,6 +24,7 @@ static constexpr int action_dims = 2;
 static constexpr int num_contacts = 3;
 static constexpr int contact_dims = 3 * num_contacts;
 
+using JointState = Eigen::Matrix<double, joint_space_dims, 1>;
 using State = Eigen::Matrix<double, state_dims, 1>;
 using Action = Eigen::Matrix<double, action_dims, 1>;
 using Contact = Eigen::Matrix<double, num_contacts, 1>;

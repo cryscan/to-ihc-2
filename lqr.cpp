@@ -42,7 +42,8 @@ LQR::LQR(int horizon, int interval, std::vector<double> line_search_steps, int m
         dv(horizon),
         mu(0),
         delta(0),
-        decrease_ratio(0) {
+        decrease_ratio(0),
+        feedforward_gain(0) {
     thread_alloc::parallel_setup(omp_get_max_threads(), in_parallel, thread_num);
     thread_alloc::hold_memory(true);
     CppAD::parallel_ad<double>();
