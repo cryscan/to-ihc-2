@@ -42,7 +42,8 @@ LQR::LQR(int horizon, int interval, std::vector<double> line_search_steps, int m
         dv(horizon),
         mu(0),
         delta(0),
-        decrease_ratio(0) {
+        decrease_ratio(0),
+        feedforward_gain(0) {
     thread_alloc::parallel_setup(omp_get_max_threads(), in_parallel, thread_num);
     thread_alloc::hold_memory(true);
     CppAD::parallel_ad<double>();
@@ -77,7 +78,7 @@ void LQR::linearize() {
 
         dynamics.params.x = x[i];
         dynamics.params.u = u[i];
-        dynamics.params.d = kinetics.get_foot_pos().z();
+        dynamics.params.d << kinetics.get_body_pos().z(), kinetics.get_knee_pos().z(), kinetics.get_foot_pos().z();
         dynamics.Base::evaluate();
 
         // linearize the system around the new trajectory
@@ -128,7 +129,7 @@ void LQR::solve() {
             Action q_u = q_ux_u.rightCols<1>();
             dv[i] << d.dot(q_u), 0.5 * d.dot(q_uu * d);
 
-            feedforward_gain += d.maxCoeff() / (u[i].norm() + 1);
+            feedforward_gain += d.cwiseAbs().maxCoeff() / (u[i].norm() + 1);
             feedforward_gain /= horizon;
 
             A a_bk = a[i] + b[i] * k[i];
@@ -192,7 +193,8 @@ void LQR::update() {
 
                 dynamics.params.x = x_[i];
                 dynamics.params.u = u_[i];
-                dynamics.params.d = kinetics.get_foot_pos().z();
+                dynamics.params.d
+                        << kinetics.get_body_pos().z(), kinetics.get_knee_pos().z(), kinetics.get_foot_pos().z();
 
                 dynamics.Base::evaluate(EvalOption::ZERO_ORDER);
                 x_[i + 1] = dynamics.get_f();

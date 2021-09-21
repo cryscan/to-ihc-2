@@ -13,25 +13,62 @@ template<>
 struct Parameter<Dynamics> {
     State x;
     Action u;
-    double d{0};
+    Contact d;
 };
 
-#define INPUT_DIMS  (state_dims + action_dims + 1)
-#define OUTPUT_DIMS state_dims
+struct ContactBase {
+    using Scalar = Robot::rcg::Scalar;
+    using JointState = Robot::rcg::JointState;
 
-struct Dynamics : public ADBase<Dynamics, INPUT_DIMS, OUTPUT_DIMS> {
+    using ContactJacobian = Robot::rcg::Matrix<contact_dims, joint_space_dims>;
+    using ContactJacobianTranspose = Robot::rcg::Matrix<joint_space_dims, contact_dims>;
+    using ContactInertia = Robot::rcg::Matrix<contact_dims, contact_dims>;
+    using Percussion = Robot::rcg::Matrix<contact_dims, 1>;
+
+    using Vector3 = Robot::rcg::Vector3;
+    using Matrix3 = Robot::rcg::Matrix<3, 3>;
+
+    ContactBase(Robot::rcg::Jacobians& jacobians, Robot::rcg::InertiaProperties& inertia_properties);
+
+protected:
+    // stack contact jacobians
+    [[nodiscard]] ContactJacobian contact_jacobian(const JointState& q) const;
+
+    [[nodiscard]] Percussion
+    solve_percussion(const ContactInertia& G,
+                     const Percussion& c,
+                     const Scalar& dt,
+                     const Scalar& mu,
+                     int num_iters) const;
+
+private:
+    Robot::rcg::Jacobians& jacobians;
+    Robot::rcg::InertiaProperties& inertia_properties;
+
+    [[nodiscard]] static Vector3 prox(const Vector3& p, const Scalar& mu);
+};
+
+struct Dynamics :
+        public ADBase<Dynamics, state_dims + action_dims + num_contacts, state_dims>,
+        public ContactBase {
     using Base = decltype(base_type())::type;
 
     using Base::Scalar;
     using Base::ScalarTraits;
     using Base::JointState;
+    using Base::State;
     using Base::Action;
 
     using Base::input_dims;
     using Base::output_dims;
 
-    using Vector3 = Robot::rcg::Vector3;
-    using Matrix3 = Robot::rcg::Matrix<3, 3>;
+    using ContactBase::ContactJacobian;
+    using ContactBase::ContactJacobianTranspose;
+    using ContactBase::ContactInertia;
+    using ContactBase::Percussion;
+
+    using ContactBase::Vector3;
+    using ContactBase::Matrix3;
 
     Dynamics(const std::string& name, int num_iters, double dt, double mu, double torque_limit);
 
@@ -59,18 +96,16 @@ private:
 
     JointState q, u;
     Action tau;
-    Scalar d;
+    Contact d;
 
-    State f;
+    ::State f;
     Eigen::Matrix<double, state_dims, state_dims, Eigen::RowMajor> df_dx;
     Eigen::Matrix<double, state_dims, action_dims, Eigen::RowMajor> df_du;
 
-    inline std::tuple<JointState, JointState> step() const;
-    inline Vector3 prox(const Vector3& p) const;
+    std::tuple<JointState, JointState> step() const;
+    std::tuple<JointState, JointState> contact(const JointState& qm) const;
+
+    JointState nonlinear_terms(const JointState& qm) const;
 };
-
-#undef INPUT_DIMS
-#undef OUTPUT_DIMS
-
 
 #endif //TO_IHC_2_DYNAMICS_H

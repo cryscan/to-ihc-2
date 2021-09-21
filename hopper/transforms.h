@@ -47,14 +47,14 @@ namespace Hopper {
 
             typedef TransformMotion<Dummy>::MatrixType MatrixType;
 
-            struct Type_fr_u0_X_fr_body : public TransformMotion<Type_fr_u0_X_fr_body> {
-                Type_fr_u0_X_fr_body();
-                const Type_fr_u0_X_fr_body& update(const state_t&);
+            struct Type_fr_u0_X_body : public TransformMotion<Type_fr_u0_X_body> {
+                Type_fr_u0_X_body();
+                const Type_fr_u0_X_body& update(const state_t&);
             };
 
-            struct Type_fr_u0_X_fr_leg : public TransformMotion<Type_fr_u0_X_fr_leg> {
-                Type_fr_u0_X_fr_leg();
-                const Type_fr_u0_X_fr_leg& update(const state_t&);
+            struct Type_fr_u0_X_knee : public TransformMotion<Type_fr_u0_X_knee> {
+                Type_fr_u0_X_knee();
+                const Type_fr_u0_X_knee& update(const state_t&);
             };
 
             struct Type_fr_u0_X_foot : public TransformMotion<Type_fr_u0_X_foot> {
@@ -126,8 +126,8 @@ namespace Hopper {
             MotionTransforms();
             void updateParams(const Params_lengths&, const Params_angles&);
 
-            Type_fr_u0_X_fr_body fr_u0_X_fr_body;
-            Type_fr_u0_X_fr_leg fr_u0_X_fr_leg;
+            Type_fr_u0_X_body fr_u0_X_body;
+            Type_fr_u0_X_knee fr_u0_X_knee;
             Type_fr_u0_X_foot fr_u0_X_foot;
             Type_fr_u0_X_fr_BH fr_u0_X_fr_BH;
             Type_fr_u0_X_fr_BX fr_u0_X_fr_BX;
@@ -158,14 +158,14 @@ namespace Hopper {
 
             typedef TransformForce<Dummy>::MatrixType MatrixType;
 
-            struct Type_fr_u0_X_fr_body : public TransformForce<Type_fr_u0_X_fr_body> {
-                Type_fr_u0_X_fr_body();
-                const Type_fr_u0_X_fr_body& update(const state_t&);
+            struct Type_fr_u0_X_body : public TransformForce<Type_fr_u0_X_body> {
+                Type_fr_u0_X_body();
+                const Type_fr_u0_X_body& update(const state_t&);
             };
 
-            struct Type_fr_u0_X_fr_leg : public TransformForce<Type_fr_u0_X_fr_leg> {
-                Type_fr_u0_X_fr_leg();
-                const Type_fr_u0_X_fr_leg& update(const state_t&);
+            struct Type_fr_u0_X_knee : public TransformForce<Type_fr_u0_X_knee> {
+                Type_fr_u0_X_knee();
+                const Type_fr_u0_X_knee& update(const state_t&);
             };
 
             struct Type_fr_u0_X_foot : public TransformForce<Type_fr_u0_X_foot> {
@@ -237,8 +237,8 @@ namespace Hopper {
             ForceTransforms();
             void updateParams(const Params_lengths&, const Params_angles&);
 
-            Type_fr_u0_X_fr_body fr_u0_X_fr_body;
-            Type_fr_u0_X_fr_leg fr_u0_X_fr_leg;
+            Type_fr_u0_X_body fr_u0_X_body;
+            Type_fr_u0_X_knee fr_u0_X_knee;
             Type_fr_u0_X_foot fr_u0_X_foot;
             Type_fr_u0_X_fr_BH fr_u0_X_fr_BH;
             Type_fr_u0_X_fr_BX fr_u0_X_fr_BX;
@@ -269,14 +269,14 @@ namespace Hopper {
 
             typedef TransformHomogeneous<Dummy>::MatrixType MatrixType;
 
-            struct Type_fr_u0_X_fr_body : public TransformHomogeneous<Type_fr_u0_X_fr_body> {
-                Type_fr_u0_X_fr_body();
-                const Type_fr_u0_X_fr_body& update(const state_t&);
+            struct Type_fr_u0_X_body : public TransformHomogeneous<Type_fr_u0_X_body> {
+                Type_fr_u0_X_body();
+                const Type_fr_u0_X_body& update(const state_t&);
             };
 
-            struct Type_fr_u0_X_fr_leg : public TransformHomogeneous<Type_fr_u0_X_fr_leg> {
-                Type_fr_u0_X_fr_leg();
-                const Type_fr_u0_X_fr_leg& update(const state_t&);
+            struct Type_fr_u0_X_knee : public TransformHomogeneous<Type_fr_u0_X_knee> {
+                Type_fr_u0_X_knee();
+                const Type_fr_u0_X_knee& update(const state_t&);
             };
 
             struct Type_fr_u0_X_foot : public TransformHomogeneous<Type_fr_u0_X_foot> {
@@ -348,8 +348,8 @@ namespace Hopper {
             HomogeneousTransforms();
             void updateParams(const Params_lengths&, const Params_angles&);
 
-            Type_fr_u0_X_fr_body fr_u0_X_fr_body;
-            Type_fr_u0_X_fr_leg fr_u0_X_fr_leg;
+            Type_fr_u0_X_body fr_u0_X_body;
+            Type_fr_u0_X_knee fr_u0_X_knee;
             Type_fr_u0_X_foot fr_u0_X_foot;
             Type_fr_u0_X_fr_BH fr_u0_X_fr_BH;
             Type_fr_u0_X_fr_BX fr_u0_X_fr_BX;

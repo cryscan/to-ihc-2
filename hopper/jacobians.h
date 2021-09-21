@@ -20,6 +20,18 @@ namespace Hopper {
         class Jacobians {
         public:
 
+            struct Type_fr_u0_J_body : public JacobianT<4, Type_fr_u0_J_body> {
+                Type_fr_u0_J_body();
+                const Type_fr_u0_J_body& update(const JointState&);
+            };
+
+
+            struct Type_fr_u0_J_knee : public JacobianT<4, Type_fr_u0_J_knee> {
+                Type_fr_u0_J_knee();
+                const Type_fr_u0_J_knee& update(const JointState&);
+            };
+
+
             struct Type_fr_u0_J_foot : public JacobianT<4, Type_fr_u0_J_foot> {
                 Type_fr_u0_J_foot();
                 const Type_fr_u0_J_foot& update(const JointState&);
@@ -29,6 +41,8 @@ namespace Hopper {
             Jacobians();
             void updateParameters(const Params_lengths& _lengths, const Params_angles& _angles);
         public:
+            Type_fr_u0_J_body fr_u0_J_body;
+            Type_fr_u0_J_knee fr_u0_J_knee;
             Type_fr_u0_J_foot fr_u0_J_foot;
 
         protected:

@@ -4,6 +4,7 @@
 
 #include "kinetics.h"
 #include "dynamics.h"
+#include "stabilizer.h"
 #include "cost.h"
 #include "lqr.h"
 
@@ -41,7 +42,8 @@ auto make_cost(std::istream& is, const std::string& name, const State& x_star) {
     return cost;
 }
 
-auto read_init_trajectory(std::ifstream& fs) {
+std::tuple<std::vector<State>, std::vector<Action>>
+read_init_trajectory(std::ifstream& fs) {
     std::vector<State> x;
     std::vector<Action> u;
 
@@ -61,7 +63,41 @@ auto read_init_trajectory(std::ifstream& fs) {
         u.push_back(u_);
     }
 
-    return std::tuple(x, u);
+    return {x, u};
+}
+
+void stabilizer_init_trajectory(LQR& lqr, Kinetics& kinetics, Dynamics& dynamics) {
+    State pd_scale;
+    pd_scale << 0, 0, 100.0, 100.0, 0, 0, 0.0, 0.0;
+
+    Stabilizer stabilizer("stabilizer", pd_scale, Action::Zero());
+    stabilizer.Base::build_map();
+
+    State x0 = dynamics.params.x;
+    stabilizer.params.q_star = x0.head<joint_space_dims>();
+
+    int horizon = lqr.horizon;
+
+    std::vector<State> x(horizon + 1, x0);
+    std::vector<Action> u(horizon, Action::Zero());
+
+    for (int i = 0; i < horizon; ++i) {
+        stabilizer.params.x = x[i];
+        stabilizer.Base::evaluate();
+        u[i] = stabilizer.get_f();
+
+        kinetics.params.x = x[i];
+        kinetics.Base::evaluate();
+
+        dynamics.params.x = x[i];
+        dynamics.params.u = u[i];
+        dynamics.params.d << kinetics.get_body_pos().z(), kinetics.get_knee_pos().z(), kinetics.get_foot_pos().z();
+        dynamics.Base::evaluate();
+
+        x[i + 1] = dynamics.get_f();
+    }
+
+    lqr.init(x, u);
 }
 
 auto make_lqr(std::istream& is,
@@ -75,11 +111,11 @@ auto make_lqr(std::istream& is,
 
     interval = horizon;
 
-    LQR lqr(horizon, interval, {1.0, 0.5, 0.25, 0.125}, 4, kinetics, dynamics, cost, cost_final);
+    LQR lqr(horizon, interval, {1.0, 0.5, 0.25, 0.125}, 3, kinetics, dynamics, cost, cost_final);
 
-    std::ifstream fs(init_file);
-    auto[x, u] = read_init_trajectory(fs);
-    lqr.init(x, u);
+//    std::ifstream fs(init_file);
+//    auto[x, u] = read_init_trajectory(fs);
+//    lqr.init(x, u);
 
     return lqr;
 }
@@ -90,11 +126,14 @@ int main() {
     int num_iters;
     is >> num_iters;
 
-    double defect_limit;
-    is >> defect_limit;
+    double feedforward_gain_limit;
+    is >> feedforward_gain_limit;
 
     Kinetics kinetics("kinetics");
     auto dynamics = make_dynamics(is);
+
+    kinetics.Base::build_map();
+    dynamics.Base::build_map();
 
     State x_star;
     for (int i = 0; i < x_star.size(); ++i)
@@ -104,6 +143,8 @@ int main() {
     auto cost_final = make_cost(is, "cost_final", x_star);
 
     auto lqr = make_lqr(is, kinetics, dynamics, cost, cost_final);
+
+    stabilizer_init_trajectory(lqr, kinetics, dynamics);
 
     {
         std::cout << "Initialization finished" << std::endl;
@@ -120,12 +161,12 @@ int main() {
                   << lqr.get_decrease_ratio() << '\t'
                   << lqr.get_feedforward_gain() << std::endl;
 
-        if (defect_limit < 0.0 || lqr.total_defect() < defect_limit) {
+        {
             std::fstream os("out.txt", std::ios::out | std::ios::trunc);
             lqr.print(os);
         }
 
-        if (lqr.get_feedforward_gain() < 1e-4) {
+        if (lqr.get_feedforward_gain() < feedforward_gain_limit) {
             std::cout << "Converged" << std::endl;
             break;
         }

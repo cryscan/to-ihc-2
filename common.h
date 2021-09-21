@@ -21,9 +21,13 @@ namespace Robot = Hopper;
 static constexpr int joint_space_dims = Hopper::rcg::JointSpaceDimension;
 static constexpr int state_dims = joint_space_dims + joint_space_dims;
 static constexpr int action_dims = 2;
+static constexpr int num_contacts = 3;
+static constexpr int contact_dims = 3 * num_contacts;
 
+using JointState = Eigen::Matrix<double, joint_space_dims, 1>;
 using State = Eigen::Matrix<double, state_dims, 1>;
 using Action = Eigen::Matrix<double, action_dims, 1>;
+using Contact = Eigen::Matrix<double, num_contacts, 1>;
 
 enum class EvalOption {
     ZERO_ORDER,
@@ -41,7 +45,10 @@ struct ADBase {
     using Scalar = Robot::rcg::Scalar;
     using ScalarTraits = Robot::rcg::ScalarTraits;
     using JointState = Robot::rcg::JointState;
+
+    using State = Robot::rcg::Matrix<state_dims, 1>;
     using Action = Robot::rcg::Matrix<action_dims, 1>;
+    using Contact = Robot::rcg::Matrix<num_contacts, 1>;
 
     static constexpr int input_dims = InputDims;
     static constexpr int output_dims = OutputDims;
@@ -91,8 +98,11 @@ protected:
         c_source_gen.setCreateJacobian(true);
 
         ModelLibraryCSourceGen<double> library_c_source_gen(c_source_gen);
+        SaveFilesModelLibraryProcessor<double> save_files(library_c_source_gen);
         DynamicModelLibraryProcessor<double> processor(library_c_source_gen, name);
         GccCompiler<double> compiler;
+
+        save_files.saveSources();
 
         lib = processor.createDynamicLibrary(compiler);
         model = lib->model(name);
@@ -108,5 +118,6 @@ protected:
 #define ASSIGN_VECTOR(to, from, it, size) (to) = (from).segment<(size)>(it); (it) += (size);
 #define ASSIGN_COLS(to, from, it, size) (to) = (from).middleCols<(size)>(it); (it) += (size);
 #define FILL_VECTOR(to, from, it, size) (to).segment<(size)>(it) = (from); (it) += (size);
+#define FILL_ROWS(to, from, it, size) (to).middleRows<(size)>(it) = (from); (it) += (size);
 
 #endif //TO_IHC_2_COMMON_H

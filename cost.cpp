@@ -35,9 +35,9 @@ void Cost::evaluate(const Params& params, EvalOption option) {
     f = y(0);
 
     if (option == EvalOption::FIRST_ORDER) {
-        Jacobian jac = model->Jacobian(x0);
+        Jacobian jacobian = model->Jacobian(x0);
         Eigen::DenseIndex it = 0;
-        ASSIGN_COLS(df_dx, jac, it, state_dims)
-        ASSIGN_COLS(df_du, jac, it, action_dims)
+        ASSIGN_COLS(df_dx, jacobian, it, state_dims)
+        ASSIGN_COLS(df_du, jacobian, it, action_dims)
     }
 }
