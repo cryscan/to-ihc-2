@@ -66,11 +66,12 @@ read_init_trajectory(std::ifstream& fs) {
     return {x, u};
 }
 
-void stabilizer_init_trajectory(LQR& lqr, Kinetics& kinetics, Dynamics& dynamics) {
-    State pd_scale;
-    pd_scale << 0, 0, 100.0, 100.0, 0, 0, 0.0, 0.0;
+void stabilizer_init_trajectory(std::istream& is, LQR& lqr, Kinetics& kinetics, Dynamics& dynamics) {
+    State gain;
+    for (int i = 0; i < gain.size(); ++i)
+        is >> gain(i);
 
-    Stabilizer stabilizer("stabilizer", pd_scale, Action::Zero());
+    Stabilizer stabilizer("stabilizer", gain);
     stabilizer.Base::build_map();
 
     State x0 = dynamics.params.x;
@@ -106,8 +107,7 @@ auto make_lqr(std::istream& is,
               const Cost& cost,
               const Cost& cost_final) {
     int horizon, interval;
-    std::string init_file;
-    is >> horizon >> init_file;
+    is >> horizon;
 
     interval = horizon;
 
@@ -144,7 +144,7 @@ int main() {
 
     auto lqr = make_lqr(is, kinetics, dynamics, cost, cost_final);
 
-    stabilizer_init_trajectory(lqr, kinetics, dynamics);
+    stabilizer_init_trajectory(is, lqr, kinetics, dynamics);
 
     {
         std::cout << "Initialization finished" << std::endl;

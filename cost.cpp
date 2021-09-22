@@ -4,6 +4,14 @@
 
 #include "cost.h"
 
+Cost::Cost(const std::string& name, const ::State& scale_state, const ::Action& scale_action) :
+        Base(name),
+        scale_state(scale_state.template cast<Scalar>()),
+        scale_action(scale_action.template cast<Scalar>()),
+        f(0),
+        df_dxx(scale_state.asDiagonal()),
+        df_duu(scale_action.asDiagonal()) {}
+
 Cost::Scalar Cost::cost() const {
     Scalar c = 0;
     c += 0.5 * (x - x_star).dot(scale_state.asDiagonal() * (x - x_star));

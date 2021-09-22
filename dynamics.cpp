@@ -142,8 +142,10 @@ ContactBase::solve_percussion(const ContactBase::ContactInertia& G,
                               const ContactBase::Scalar& dt,
                               const ContactBase::Scalar& mu,
                               int num_iters) const {
-    Vector3 stable_percussion(0, 0, inertia_properties.getTotalMass() * rcg::g * dt);
-    Percussion p = stable_percussion.replicate<num_contacts, 1>();
+    // Vector3 stable_percussion(0, 0, inertia_properties.getTotalMass() * rcg::g * dt / num_contacts);
+    // Percussion p = stable_percussion.replicate<num_contacts, 1>();
+    ContactInertia A = G + inertia_properties.getTotalMass() * rcg::g * dt * ContactInertia::Identity();
+    Percussion p = -ScalarTraits::solve(A, c);
 
     Scalar r = 0.1;
     for (int k = 0; k < num_iters; ++k) {

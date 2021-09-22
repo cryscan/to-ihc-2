@@ -6,6 +6,13 @@
 
 using namespace Robot;
 
+Stabilizer::Stabilizer(const std::string& name, const ::State& gain) :
+        Base(name),
+        ContactBase(jacobians, inertia_properties),
+        inverse_dynamics(inertia_properties, motion_transforms),
+        jsim(inertia_properties, force_transforms),
+        gain(gain.template cast<Scalar>()) {}
+
 void Stabilizer::build_map() {
     CppAD::Independent(ad_x);
 
@@ -34,15 +41,10 @@ void Stabilizer::evaluate(const Base::Params& params, EvalOption option) {
 Stabilizer::Action Stabilizer::pd() const {
     State dx;
     dx << q_star - q, -u;
-    dx = dx.cwiseProduct(pd_scale);
+    dx = dx.cwiseProduct(gain);
 
     JointState dq = dx.head<joint_space_dims>();
     JointState du = dx.tail<joint_space_dims>();
 
     return dq.tail<action_dims>() + du.tail<action_dims>();
-}
-
-Stabilizer::Action Stabilizer::id() const {
-    ContactJacobianTranspose Jt = contact_jacobian(q).transpose();
-    return Action::Zero();
 }

@@ -27,16 +27,7 @@ struct Cost : public ADBase<Cost, state_dims + state_dims + action_dims, 1> {
     using Base::input_dims;
     using Base::output_dims;
 
-    template<typename StateVector, typename ActionVector>
-    Cost(const std::string& name,
-         const Eigen::MatrixBase<StateVector>& scale_state,
-         const Eigen::MatrixBase<ActionVector>& scale_action) :
-            Base(name),
-            scale_state(scale_state.template cast<Scalar>()),
-            scale_action(scale_action.template cast<Scalar>()),
-            f(0),
-            df_dxx(scale_state.asDiagonal()),
-            df_duu(scale_action.asDiagonal()) {};
+    Cost(const std::string& name, const ::State& scale_state, const ::Action& scale_action);
 
     void build_map() override;
     void evaluate(const Params& params, EvalOption option) override;

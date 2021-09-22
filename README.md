@@ -55,10 +55,10 @@ To run the code, create a `in.txt` under the `build` folder with the following c
 
 ```
 # Iterations and minimum feedforward gain
-100 0.001
+10 0.001
 
 # Initial configuration
-0.0 0.0 0.785 -1.57 0.0 0.0 0.0 0.0
+0.5 0.0 0.785 -1.57 0.0 0.0 0.0 0.0
 
 # Target configuration
 -0.175 1.0 0.785 -1.57 0.0 0.0 0.0 0.0
@@ -71,8 +71,11 @@ To run the code, create a `in.txt` under the `build` folder with the following c
 800.0 2000.0 400.0 400.0 200.0 200.0 200.0 200.0
 0.0 0.0
 
-# Horizon and initial trajectory file
-200 ../init.txt
+# Horizon
+200
+
+# initial PD gains
+0 0 40.0 40.0 0 0 1.0 1.0
 ```
 
 Then run

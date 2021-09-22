@@ -27,16 +27,7 @@ struct Stabilizer :
     using Base::State;
     using Base::Action;
 
-    template<typename StateVector, typename ActionVector>
-    Stabilizer(const std::string& name,
-               const Eigen::MatrixBase<StateVector>& pd_scale,
-               const Eigen::MatrixBase<ActionVector>& id_scale) :
-            Base(name),
-            ContactBase(jacobians, inertia_properties),
-            inverse_dynamics(inertia_properties, motion_transforms),
-            jsim(inertia_properties, force_transforms),
-            pd_scale(pd_scale.template cast<Scalar>()),
-            id_scale(id_scale.template cast<Scalar>()) {}
+    Stabilizer(const std::string& name, const ::State& gain);
 
     void build_map() override;
     void evaluate(const Params& params, EvalOption option) override;
@@ -58,11 +49,9 @@ private:
     JointState q, u, q_star;
     Contact d;
 
-    const State pd_scale;
-    const Action id_scale;
+    const State gain;
 
     Action pd() const;
-    Action id() const;
 };
 
 #endif //TO_IHC_2_STABILIZER_H

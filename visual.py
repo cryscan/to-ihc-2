@@ -27,11 +27,11 @@ def animate(i):
     phi = state[3]
 
     base = np.array([state[1], state[0] + 0.6])
-    leg = base + L * np.array([np.sin(theta), -np.cos(theta)])
-    foot = leg + L * np.array([np.sin(theta + phi), -np.cos(theta + phi)])
+    knee = base + L * np.array([np.sin(theta), -np.cos(theta)])
+    foot = knee + L * np.array([np.sin(theta + phi), -np.cos(theta + phi)])
 
-    x = [base[0], leg[0], foot[0]]
-    y = [base[1], leg[1], foot[1]]
+    x = [base[0], knee[0], foot[0]]
+    y = [base[1], knee[1], foot[1]]
     line.set_data(x, y)
 
     time_text.set_text(time_template % (i * dt))
