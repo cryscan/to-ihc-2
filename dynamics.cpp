@@ -57,7 +57,7 @@ Dynamics::contact(const JointState& qm) const {
     Eigen::DenseIndex it = 0;
     for (int i = 0; i < num_contacts; ++i) {
         G.diagonal().segment<3>(it) += Vector3::Ones() * 0.1 * ScalarTraits::exp(8 * ScalarTraits::tanh(20 * d(i)));
-        c.segment<3>(it) += Vector3(0, 0, min(d(i) / dt, 0));
+        // c.segment<3>(it) += Vector3(0, 0, min(d(i) / dt, 0));
         it += 3;
     }
 
@@ -142,14 +142,18 @@ ContactBase::solve_percussion(const ContactBase::ContactInertia& G,
                               const ContactBase::Scalar& dt,
                               const ContactBase::Scalar& mu,
                               int num_iters) const {
-    // Vector3 stable_percussion(0, 0, inertia_properties.getTotalMass() * rcg::g * dt / num_contacts);
-    // Percussion p = stable_percussion.replicate<num_contacts, 1>();
     ContactInertia A = G + inertia_properties.getTotalMass() * rcg::g * dt * ContactInertia::Identity();
-    Percussion p = -ScalarTraits::solve(A, c);
+    ContactInertia LU = ScalarTraits::cholesky(A);
+    Percussion p = -ScalarTraits::cholesky_solve(LU, c);
 
-    Scalar r = 0.1;
     for (int k = 0; k < num_iters; ++k) {
-        p -= r * (G * p + c);
+        Percussion r;
+        for (int i = 0; i < contact_dims; i += 3) {
+            Scalar det = LU.diagonal().segment<3>(i).prod();
+            r.segment<3>(i).fill(1 / (det * det + 1));
+        }
+        p -= r.cwiseProduct(G * p + c);
+
         for (int i = 0; i < contact_dims; i += 3)
             p.segment<3>(i) = prox(p.segment<3>(i), mu);
     }

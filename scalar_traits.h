@@ -40,7 +40,6 @@ public:
         return cholesky_solve(LU, b);
     }
 
-private:
     // custom LU factorization
     // https://bitbucket.org/adrlab/hyq_gen_ad/src/master/include/external/iit/rbd/traits/CppADCodegenTrait.h
     template<int Dims>

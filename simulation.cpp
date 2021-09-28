@@ -23,12 +23,12 @@ int main() {
     State pd_scale;
     pd_scale << 0, 0, 10.0, 10.0, 0, 0, 0.0, 0.0;
 
-    Stabilizer stabilizer("stabilizer", pd_scale, Action::Zero());
+    Stabilizer stabilizer("stabilizer", pd_scale);
     stabilizer.Base::build_map();
 
     stabilizer.params.q_star = x0.head<joint_space_dims>();
 
-    int horizon = 500;
+    int horizon = 200;
     std::vector<State> x(horizon + 1, x0);
     std::vector<Action> u(horizon, Action::Zero());
 
