@@ -57,7 +57,7 @@ To run the code, create a `in.txt` under the `build` folder with the following c
 
 ```
 # Iterations and minimum feedforward gain
-10 0.001
+10 1e-4
 
 # Initial configuration
 0.5 0.0 0.785 -1.57 0.0 0.0 0.0 0.0

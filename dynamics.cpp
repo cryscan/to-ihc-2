@@ -39,6 +39,8 @@ std::tuple<Dynamics::JointState, Dynamics::JointState> Dynamics::step() const {
     return {qe, ue};
 }
 
+#define VECTOR3(x, i) (x).segment<3>(i)
+
 std::tuple<Dynamics::JointState, Dynamics::JointState>
 Dynamics::contact(const JointState& qm) const {
     auto h = nonlinear_terms(qm);
@@ -56,12 +58,13 @@ Dynamics::contact(const JointState& qm) const {
 
     Eigen::DenseIndex it = 0;
     for (int i = 0; i < num_contacts; ++i) {
-        G.diagonal().segment<3>(it) += Vector3::Ones() * 0.1 * ScalarTraits::exp(8 * ScalarTraits::tanh(20 * d(i)));
+        VECTOR3(G.diagonal(), it) += Vector3::Ones() * 0.1 * ScalarTraits::exp(8 * ScalarTraits::tanh(20 * d(i)));
+        // VECTOR3(G.diagonal(), it)(1) = 1.0;
         // c.segment<3>(it) += Vector3(0, 0, min(d(i) / dt, 0));
         it += 3;
     }
 
-    auto p = solve_percussion(G, c, dt, mu, num_iters);
+    auto p = solve_percussion(G, c, mu, num_iters);
 
     return {m_h, m_Jt * p};
 }
@@ -139,23 +142,24 @@ ContactBase::ContactJacobian ContactBase::contact_jacobian(const ContactBase::Jo
 ContactBase::Percussion
 ContactBase::solve_percussion(const ContactBase::ContactInertia& G,
                               const ContactBase::Percussion& c,
-                              const ContactBase::Scalar& dt,
                               const ContactBase::Scalar& mu,
-                              int num_iters) const {
-    ContactInertia A = G + inertia_properties.getTotalMass() * rcg::g * dt * ContactInertia::Identity();
-    ContactInertia LU = ScalarTraits::cholesky(A);
-    Percussion p = -ScalarTraits::cholesky_solve(LU, c);
+                              int num_iters) {
+    auto remove_nan = [](auto x) { return ScalarTraits::remove_nan(x, 0); };
+    ContactInertia LU = ScalarTraits::cholesky(G);
+    Percussion p = -ScalarTraits::cholesky_solve(LU, c).unaryExpr(remove_nan);
+
+    Percussion r;
+    for (int i = 0; i < contact_dims; i += 3) {
+        auto max_abs = [](auto x) { return max(ScalarTraits::abs(x), 1); };
+        Scalar det = VECTOR3(LU.diagonal().unaryExpr(max_abs), i).prod();
+        VECTOR3(r, i).fill(1 / det / det);
+    }
 
     for (int k = 0; k < num_iters; ++k) {
-        Percussion r;
-        for (int i = 0; i < contact_dims; i += 3) {
-            Scalar det = LU.diagonal().segment<3>(i).prod();
-            r.segment<3>(i).fill(1 / (det * det + 1));
-        }
         p -= r.cwiseProduct(G * p + c);
 
         for (int i = 0; i < contact_dims; i += 3)
-            p.segment<3>(i) = prox(p.segment<3>(i), mu);
+            VECTOR3(p, i) = prox(VECTOR3(p, i), mu);
     }
 
     return p;

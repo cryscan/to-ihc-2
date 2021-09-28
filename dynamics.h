@@ -34,12 +34,11 @@ protected:
     // stack contact jacobians
     [[nodiscard]] ContactJacobian contact_jacobian(const JointState& q) const;
 
-    [[nodiscard]] Percussion
+    [[nodiscard]] static Percussion
     solve_percussion(const ContactInertia& G,
                      const Percussion& c,
-                     const Scalar& dt,
                      const Scalar& mu,
-                     int num_iters) const;
+                     int num_iters);
 
 private:
     Robot::rcg::Jacobians& jacobians;

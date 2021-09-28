@@ -35,7 +35,7 @@ int main() {
     for (int i = 0; i < horizon; ++i) {
         stabilizer.params.x = x[i];
         stabilizer.Base::evaluate();
-        u[i] = stabilizer.get_f();
+        // u[i] = stabilizer.get_f();
 
         kinetics.params.x = x[i];
         kinetics.Base::evaluate();

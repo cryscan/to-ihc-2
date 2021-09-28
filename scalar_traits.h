@@ -33,6 +33,10 @@ public:
     inline static Scalar min(const Scalar& x, const Scalar& y) { return CppAD::CondExpLt(x, y, x, y); }
     inline static Scalar max(const Scalar& x, const Scalar& y) { return CppAD::CondExpGt(x, y, x, y); }
 
+    inline static Scalar remove_nan(const Scalar& x, const Scalar& y) {
+        return CppAD::CondExpEq(x, x, x, y);
+    }
+
     template<int Dims>
     inline static Eigen::Matrix<Scalar, Dims, 1>
     solve(const Eigen::Matrix<Scalar, Dims, Dims>& A, const Eigen::Matrix<Scalar, Dims, 1>& b) {
