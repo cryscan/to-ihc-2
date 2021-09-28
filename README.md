@@ -4,7 +4,9 @@ This is an unofficial implementation of [1]. The algorithm makes use of concepts
 gradients of the system dynamics including the constraint forces and subsequently solve the optimal control problem with
 the unconstrained iLQR algorithm.
 
-Click the [link](https://youtu.be/FF3h_-KwoyE) to watch the result video.
+![animation](animation.gif)
+
+The moving picture shows a trajectory generated.
 
 ## Implementation
 
