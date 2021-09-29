@@ -144,9 +144,8 @@ ContactBase::solve_percussion(const ContactBase::ContactInertia& G,
                               const ContactBase::Percussion& c,
                               const ContactBase::Scalar& mu,
                               int num_iters) {
-    auto remove_nan = [](auto x) { return ScalarTraits::remove_nan(x, 0); };
     ContactInertia LU = ScalarTraits::cholesky(G);
-    Percussion p = -ScalarTraits::cholesky_solve(LU, c).unaryExpr(remove_nan);
+    Percussion p = -ScalarTraits::cholesky_solve(LU, c);
 
     Percussion r;
     for (int i = 0; i < contact_dims; i += 3) {
