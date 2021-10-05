@@ -111,9 +111,11 @@ public:
     }
 };
 
+#ifndef NDEBUG
 template<typename Base>
 struct CppAD::ok_if_S_same_as_T<CppAD::AD<CppAD::cg::CG<Base>>, typename CppADCodeGenTraits<Base>::Scalar> {
     CppAD::AD<CppAD::cg::CG<Base>> value;
 };
+#endif
 
 #endif //TO_IHC_2_SCALAR_TRAITS_H
