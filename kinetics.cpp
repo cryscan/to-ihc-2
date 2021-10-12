@@ -4,6 +4,8 @@
 
 #include "kinetics.h"
 
+Kinetics::Kinetics(const std::string& name) : Base(name, false) {}
+
 void Kinetics::build_map() {
     CppAD::Independent(ad_x);
 

@@ -53,11 +53,16 @@ struct ADBase {
     static constexpr int input_dims = InputDims;
     static constexpr int output_dims = OutputDims;
 
-    explicit ADBase(const std::string& name) :
+    explicit ADBase(const std::string& name, bool create_jacobian = true) :
             name(name),
-            library_name(name + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION) {}
+            library_name(name + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION),
+            create_jacobian(create_jacobian) {}
 
-    ADBase(const ADBase& other) : params(other.params), name(other.name), library_name(other.library_name) {}
+    ADBase(const ADBase& other) :
+            params(other.params),
+            name(other.name),
+            library_name(other.library_name),
+            create_jacobian(create_jacobian) {}
 
     virtual void build_map() {
         this->build_map();
@@ -76,6 +81,7 @@ struct ADBase {
     virtual void evaluate(const Params&, EvalOption option) {};
 
     static constexpr std::remove_pointer<ADBase<T, input_dims, output_dims>> base_type() {};
+    const bool create_jacobian;
 
     Params params;
 
@@ -95,7 +101,7 @@ protected:
 
         ModelCSourceGen<double> c_source_gen(ad_fun, name);
         c_source_gen.setCreateForwardZero(true);
-        c_source_gen.setCreateJacobian(true);
+        c_source_gen.setCreateJacobian(create_jacobian);
 
         ModelLibraryCSourceGen<double> library_c_source_gen(c_source_gen);
         SaveFilesModelLibraryProcessor<double> save_files(library_c_source_gen);

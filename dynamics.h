@@ -28,7 +28,7 @@ struct ContactBase {
     using Vector3 = Robot::rcg::Vector3;
     using Matrix3 = Robot::rcg::Matrix<3, 3>;
 
-    ContactBase(Robot::rcg::Jacobians& jacobians, Robot::rcg::InertiaProperties& inertia_properties);
+    ContactBase();
 
 protected:
     // stack contact jacobians
@@ -40,11 +40,16 @@ protected:
                      const Scalar& mu,
                      int num_iters);
 
-private:
-    Robot::rcg::Jacobians& jacobians;
-    Robot::rcg::InertiaProperties& inertia_properties;
-
     [[nodiscard]] static Vector3 prox(const Vector3& p, const Scalar& mu);
+
+    mutable Robot::rcg::HomogeneousTransforms transforms;
+    mutable Robot::rcg::MotionTransforms motion_transforms;
+    mutable Robot::rcg::ForceTransforms force_transforms;
+
+    mutable Robot::rcg::Jacobians jacobians;
+    mutable Robot::rcg::InertiaProperties inertia_properties;
+    mutable Robot::rcg::InverseDynamics inverse_dynamics;
+    mutable Robot::rcg::JSIM jsim;
 };
 
 struct Dynamics :
@@ -79,15 +84,6 @@ struct Dynamics :
     [[nodiscard]] auto get_df_du() const { return df_du; }
 
 private:
-    mutable Robot::rcg::HomogeneousTransforms transforms;
-    mutable Robot::rcg::MotionTransforms motion_transforms;
-    mutable Robot::rcg::ForceTransforms force_transforms;
-
-    mutable Robot::rcg::Jacobians jacobians;
-    mutable Robot::rcg::InertiaProperties inertia_properties;
-    mutable Robot::rcg::InverseDynamics inverse_dynamics;
-    mutable Robot::rcg::JSIM jsim;
-
     const int num_iters;
     const Scalar dt;
     const Scalar mu;

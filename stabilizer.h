@@ -35,15 +35,6 @@ struct Stabilizer :
     [[nodiscard]] auto get_f() const { return f; }
 
 private:
-    mutable Robot::rcg::HomogeneousTransforms transforms;
-    mutable Robot::rcg::MotionTransforms motion_transforms;
-    mutable Robot::rcg::ForceTransforms force_transforms;
-
-    mutable Robot::rcg::Jacobians jacobians;
-    mutable Robot::rcg::InertiaProperties inertia_properties;
-    mutable Robot::rcg::InverseDynamics inverse_dynamics;
-    mutable Robot::rcg::JSIM jsim;
-
     ::Action f;
 
     JointState q, u, q_star;

@@ -28,7 +28,7 @@ struct Kinetics : public ADBase<Kinetics, state_dims, 9> {
     using Vector3 = Robot::rcg::Vector3;
     using Affine3 = Eigen::Transform<Scalar, 3, Eigen::Affine>;
 
-    explicit Kinetics(const std::string& name) : Base(name) {}
+    explicit Kinetics(const std::string& name);
 
     void build_map() override;
     void evaluate(const Params& params, EvalOption option) override;

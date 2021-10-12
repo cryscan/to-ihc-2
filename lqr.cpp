@@ -21,12 +21,14 @@ namespace {
     const size_t num_threads = omp_get_max_threads();
 }
 
-LQR::LQR(int horizon, int interval, std::vector<double> line_search_steps, int max_line_search_trails,
+LQR::LQR(int horizon, int interval,
+         std::vector<double> line_search_steps, int max_line_search_trails, int max_solve_trails,
          const Kinetics& kinetics, const Dynamics& dynamics, const Cost& cost, const Cost& cost_final) :
         horizon(horizon),
         interval(interval),
         line_search_steps(std::move(line_search_steps)),
         max_line_search_trails(max_line_search_trails),
+        max_solve_trails(max_solve_trails),
         vec_kinetics(num_threads, kinetics),
         vec_dynamics(num_threads, dynamics),
         vec_cost(num_threads, cost),
@@ -108,6 +110,7 @@ void LQR::solve() {
     static const double delta_zero = 2;
     static const double mu_min = 1e-6;
 
+    int trails = 0;
     bool ok = true;
     feedforward_gain = 0;
 
@@ -145,8 +148,9 @@ void LQR::solve() {
             // increase mu
             delta = std::max(delta_zero, delta * delta_zero);
             mu = std::max(mu_min, mu * delta);
+            ++trails;
         }
-    } while (!ok);
+    } while (!(ok || trails >= max_solve_trails));
 }
 
 void LQR::update() {

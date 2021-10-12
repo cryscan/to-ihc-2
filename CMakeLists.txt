@@ -12,3 +12,6 @@ target_link_libraries(control hopper OpenMP::OpenMP_CXX dl)
 
 add_executable(simulation simulation.cpp kinetics.cpp dynamics.cpp stabilizer.cpp)
 target_link_libraries(simulation hopper OpenMP::OpenMP_CXX dl)
+
+add_library(to SHARED simulation.cpp kinetics.cpp dynamics.cpp)
+target_link_libraries(to hopper OpenMP::OpenMP_CXX dl)

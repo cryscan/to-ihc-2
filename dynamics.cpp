@@ -17,11 +17,58 @@ namespace {
     inline Scalar max(const Scalar& x, const Scalar& y) { return ScalarTraits::max(x, y); }
 }
 
+#define VECTOR3(x, i) (x).segment<3>(i)
+
+ContactBase::ContactBase() :
+        inverse_dynamics(inertia_properties, motion_transforms),
+        jsim(inertia_properties, force_transforms) {}
+
+ContactBase::ContactJacobian ContactBase::contact_jacobian(const ContactBase::JointState& q) const {
+    ContactJacobian J;
+
+    Eigen::DenseIndex it = 0;
+    FILL_ROWS(J, jacobians.fr_u0_J_body(q).bottomRows<3>(), it, 3)
+    FILL_ROWS(J, jacobians.fr_u0_J_knee(q).bottomRows<3>(), it, 3)
+    FILL_ROWS(J, jacobians.fr_u0_J_foot(q).bottomRows<3>(), it, 3)
+
+    return J;
+}
+
+ContactBase::Percussion
+ContactBase::solve_percussion(const ContactBase::ContactInertia& G,
+                              const ContactBase::Percussion& c,
+                              const ContactBase::Scalar& mu,
+                              int num_iters) {
+    ContactInertia LU = ScalarTraits::cholesky(G);
+    Percussion p = -ScalarTraits::cholesky_solve(LU, c);
+
+    Percussion r;
+    for (int i = 0; i < contact_dims; i += 3) {
+        auto max_abs = [](auto x) { return max(ScalarTraits::abs(x), 1); };
+        Scalar det = VECTOR3(LU.diagonal().unaryExpr(max_abs), i).prod();
+        VECTOR3(r, i).fill(1 / det / det);
+    }
+
+    for (int k = 0; k < num_iters; ++k) {
+        p -= r.cwiseProduct(G * p + c);
+
+        for (int i = 0; i < contact_dims; i += 3)
+            VECTOR3(p, i) = prox(VECTOR3(p, i), mu);
+    }
+
+    return p;
+}
+
+ContactBase::Vector3 ContactBase::prox(const ContactBase::Vector3& p,
+                                       const ContactBase::Scalar& mu) {
+    auto pn = max(Scalar(0), p(2));
+    auto px = min(mu * pn, max(-mu * pn, p(0)));
+    auto py = min(mu * pn, max(-mu * pn, p(1)));
+    return {px, py, pn};
+}
+
 Dynamics::Dynamics(const std::string& name, int num_iters, double dt, double mu, double torque_limit) :
         Base(name),
-        ContactBase(jacobians, inertia_properties),
-        inverse_dynamics(inertia_properties, motion_transforms),
-        jsim(inertia_properties, force_transforms),
         num_iters(num_iters),
         dt(dt),
         mu(mu),
@@ -38,8 +85,6 @@ std::tuple<Dynamics::JointState, Dynamics::JointState> Dynamics::step() const {
 
     return {qe, ue};
 }
-
-#define VECTOR3(x, i) (x).segment<3>(i)
 
 std::tuple<Dynamics::JointState, Dynamics::JointState>
 Dynamics::contact(const JointState& qm) const {
@@ -122,52 +167,4 @@ void Dynamics::evaluate(const Params& params, EvalOption option) {
         ASSIGN_COLS(df_dx, jacobian, it, state_dims)
         ASSIGN_COLS(df_du, jacobian, it, action_dims)
     }
-}
-
-ContactBase::ContactBase(rcg::Jacobians& jacobians, rcg::InertiaProperties& inertia_properties) :
-        jacobians(jacobians),
-        inertia_properties(inertia_properties) {}
-
-ContactBase::ContactJacobian ContactBase::contact_jacobian(const ContactBase::JointState& q) const {
-    ContactJacobian J;
-
-    Eigen::DenseIndex it = 0;
-    FILL_ROWS(J, jacobians.fr_u0_J_body(q).bottomRows<3>(), it, 3)
-    FILL_ROWS(J, jacobians.fr_u0_J_knee(q).bottomRows<3>(), it, 3)
-    FILL_ROWS(J, jacobians.fr_u0_J_foot(q).bottomRows<3>(), it, 3)
-
-    return J;
-}
-
-ContactBase::Percussion
-ContactBase::solve_percussion(const ContactBase::ContactInertia& G,
-                              const ContactBase::Percussion& c,
-                              const ContactBase::Scalar& mu,
-                              int num_iters) {
-    ContactInertia LU = ScalarTraits::cholesky(G);
-    Percussion p = -ScalarTraits::cholesky_solve(LU, c);
-
-    Percussion r;
-    for (int i = 0; i < contact_dims; i += 3) {
-        auto max_abs = [](auto x) { return max(ScalarTraits::abs(x), 1); };
-        Scalar det = VECTOR3(LU.diagonal().unaryExpr(max_abs), i).prod();
-        VECTOR3(r, i).fill(1 / det / det);
-    }
-
-    for (int k = 0; k < num_iters; ++k) {
-        p -= r.cwiseProduct(G * p + c);
-
-        for (int i = 0; i < contact_dims; i += 3)
-            VECTOR3(p, i) = prox(VECTOR3(p, i), mu);
-    }
-
-    return p;
-}
-
-ContactBase::Vector3 ContactBase::prox(const ContactBase::Vector3& p,
-                                       const ContactBase::Scalar& mu) {
-    auto pn = max(Scalar(0), p(2));
-    auto px = min(mu * pn, max(-mu * pn, p(0)));
-    auto py = min(mu * pn, max(-mu * pn, p(1)));
-    return {px, py, pn};
 }

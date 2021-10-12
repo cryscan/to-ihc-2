@@ -7,10 +7,7 @@
 using namespace Robot;
 
 Stabilizer::Stabilizer(const std::string& name, const ::State& gain) :
-        Base(name),
-        ContactBase(jacobians, inertia_properties),
-        inverse_dynamics(inertia_properties, motion_transforms),
-        jsim(inertia_properties, force_transforms),
+        Base(name, false),
         gain(gain.template cast<Scalar>()) {}
 
 void Stabilizer::build_map() {

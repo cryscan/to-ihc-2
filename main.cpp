@@ -111,7 +111,7 @@ auto make_lqr(std::istream& is,
 
     interval = horizon;
 
-    LQR lqr(horizon, interval, {1.0, 0.5, 0.25, 0.125}, 3, kinetics, dynamics, cost, cost_final);
+    LQR lqr(horizon, interval, {1.0, 0.5, 0.25, 0.125}, 3, 5, kinetics, dynamics, cost, cost_final);
 
 //    std::ifstream fs(init_file);
 //    auto[x, u] = read_init_trajectory(fs);

@@ -27,7 +27,8 @@ struct LQR {
     using P = Eigen::Matrix<double, ext_state_dims, ext_state_dims>;
     using K = Eigen::Matrix<double, action_dims, ext_state_dims>;
 
-    LQR(int horizon, int interval, std::vector<double> line_search_steps, int max_line_search_trails,
+    LQR(int horizon, int interval,
+        std::vector<double> line_search_steps, int max_line_search_trails, int max_solve_trails,
         const Kinetics& kinetics, const Dynamics& dynamics, const Cost& cost, const Cost& cost_final);
 
     void init(const std::vector<State>& x, const std::vector<Action>& u);
@@ -50,6 +51,7 @@ struct LQR {
 
     const std::vector<double> line_search_steps;
     const int max_line_search_trails;
+    const int max_solve_trails;
 
 private:
     std::vector<State> x;
