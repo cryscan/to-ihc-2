@@ -50,6 +50,8 @@ struct ADBase {
     using Action = Robot::rcg::Matrix<action_dims, 1>;
     using Contact = Robot::rcg::Matrix<num_contacts, 1>;
 
+    using Jacobian = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+
     static constexpr int input_dims = InputDims;
     static constexpr int output_dims = OutputDims;
 
@@ -125,5 +127,7 @@ protected:
 #define ASSIGN_COLS(to, from, it, size) (to) = (from).middleCols<(size)>(it); (it) += (size);
 #define FILL_VECTOR(to, from, it, size) (to).segment<(size)>(it) = (from); (it) += (size);
 #define FILL_ROWS(to, from, it, size) (to).middleRows<(size)>(it) = (from); (it) += (size);
+
+#define JACOBIAN_VIEW(jac) Eigen::Map<Eigen::VectorXd>((jac).data(), (jac).size())
 
 #endif //TO_IHC_2_COMMON_H

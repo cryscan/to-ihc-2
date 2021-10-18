@@ -11,10 +11,11 @@
 #include "dynamics.h"
 #include "cost.h"
 #include "lqr.h"
+#include "slip.h"
 
 std::unique_ptr<Kinetics> kinetics;
 std::unique_ptr<Dynamics> dynamics;
-std::unique_ptr<LQR> lqr;
+std::unique_ptr<SLIP> slip;
 
 extern "C" {
 void init() {
@@ -25,6 +26,7 @@ void init() {
     dynamics->Base::build_map();
 }
 
+/*
 void step(double* in_x, double* in_u, double* out_x) {
     Eigen::Map<State> x(in_x);
     Eigen::Map<Action> u(in_u);
@@ -41,6 +43,22 @@ void step(double* in_x, double* in_u, double* out_x) {
 
     Eigen::Map<State>(out_x) << dynamics->get_f();
 }
+ */
+
+void slip_init(double dt, double mass, double l0, double k) {
+    slip = std::make_unique<SLIP>(dt, mass, l0, k);
+}
+
+void slip_set_theta(double theta) { slip->set_theta(theta); }
+void slip_set_state(SLIP::State* state) { slip->set_state(*state); }
+void slip_step() { slip->step(); }
+
+void slip_get_state(SLIP::State* state) { *state = slip->get_state(); }
+bool slip_get_stance() { return slip->get_stance(); }
+
+double slip_contact_position() { return slip->contact_position(); }
+double slip_apex_height() { return slip->apex_height(); }
+double slip_apex_velocity() { return slip->apex_velocity(); }
 }
 
 int main() {

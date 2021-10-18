@@ -144,11 +144,7 @@ void Dynamics::build_map() {
     ad_fun.optimize("no_compare_op");
 }
 
-#define JACOBIAN_VIEW(jac) Eigen::Map<Eigen::VectorXd>((jac).data(), (jac).size())
-
 void Dynamics::evaluate(const Params& params, EvalOption option) {
-    using Jacobian = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
-
     Eigen::VectorXd x(input_dims);
     Eigen::VectorXd y(output_dims);
 

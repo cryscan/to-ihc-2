@@ -19,6 +19,8 @@ public:
         Scalar(const AD& ad) : AD(ad) {}
         Scalar(const CG& cg) : AD(cg) {}
         Scalar(const Base& b) : AD(b) {}
+
+        explicit operator Base() const { return CppAD::Value(*this).getValue(); }
     };
 
     typedef typename Scalar::value_type ValueType;
@@ -45,19 +47,6 @@ public:
     template<int Dims>
     static Eigen::Matrix<Scalar, Dims, Dims>
     cholesky(const Eigen::Matrix<Scalar, Dims, Dims>& A) {
-//        for (int k = 0; k < S.rows(); ++k) {
-//            for (int i = k; i < S.rows(); ++i) {
-//                T sum(0.);
-//                for (int p = 0; p < k; ++p)sum += D(i, p) * D(p, k);
-//                D(i, k) = S(i, k) - sum; // not dividing by diagonals
-//            }
-//            for (int j = k + 1; j < S.rows(); ++j) {
-//                T sum(0.);
-//                for (int p = 0; p < k; ++p)sum += D(k, p) * D(p, j);
-//                D(k, j) = (S(k, j) - sum) / D(k, k);
-//            }
-//        }
-
         Eigen::Matrix<Scalar, Dims, Dims> LU = Eigen::Matrix<Scalar, Dims, Dims>::Zero();
 
         for (int k = 0; k < Dims; ++k) {
@@ -81,20 +70,6 @@ public:
     cholesky_solve(const Eigen::Matrix<Scalar, Dims, Dims>& LU, const Eigen::Matrix<Scalar, Dims, 1>& b) {
         Eigen::Matrix<Scalar, Dims, 1> x = Eigen::Matrix<Scalar, Dims, 1>::Zero();
         Eigen::Matrix<Scalar, Dims, 1> y = Eigen::Matrix<Scalar, Dims, 1>::Zero();
-
-//        const int d = rowAndCol;
-//        T y[d];
-//        for(int i=0;i<d;++i){
-//            T sum(0.0);
-//            for(int k=0;k<i;++k)sum+=LU(i,k)*y[k];
-//            y[i]=(b(i)-sum)/LU(i,i);
-//        }
-//        for(int i=d-1;i>=0;--i){
-//            T sum(0.);
-//            for(int k=i+1;k<d;++k)sum+=LU(i,k)*x(k);
-//            x(i)=(y[i]-sum); // not dividing by diagonals
-//        }
-//    }
 
         for (int i = 0; i < Dims; ++i) {
             Scalar sum(0);
