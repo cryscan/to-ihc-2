@@ -22,7 +22,7 @@ auto read_input_file() {
 }
 
 auto make_dynamics(std::istream& is) {
-    Dynamics dynamics("dynamics", 50, 0.01, 1, 60);
+    Dynamics dynamics("dynamics", 50);
     for (int i = 0; i < dynamics.params.x.size(); ++i)
         is >> dynamics.params.x(i);
     return dynamics;

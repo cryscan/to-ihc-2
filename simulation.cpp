@@ -20,7 +20,7 @@ std::unique_ptr<SLIP> slip;
 extern "C" {
 void init() {
     kinetics = std::make_unique<Kinetics>("kinetics");
-    dynamics = std::make_unique<Dynamics>("dynamics", 50, 0.01, 1, 60);
+    dynamics = std::make_unique<Dynamics>("dynamics", 50);
 
     kinetics->Base::build_map();
     dynamics->Base::build_map();

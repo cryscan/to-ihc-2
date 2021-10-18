@@ -67,12 +67,9 @@ ContactBase::Vector3 ContactBase::prox(const ContactBase::Vector3& p,
     return {px, py, pn};
 }
 
-Dynamics::Dynamics(const std::string& name, int num_iters, double dt, double mu, double torque_limit) :
+Dynamics::Dynamics(const std::string& name, int num_iters) :
         Base(name),
-        num_iters(num_iters),
-        dt(dt),
-        mu(mu),
-        torque_limit(torque_limit) {}
+        num_iters(num_iters) {}
 
 std::tuple<Dynamics::JointState, Dynamics::JointState> Dynamics::step() const {
     JointState qm = q + u * dt / 2.0;
@@ -133,6 +130,9 @@ void Dynamics::build_map() {
     ASSIGN_VECTOR(u, ad_x, it, joint_space_dims)
     ASSIGN_VECTOR(tau, ad_x, it, action_dims)
     ASSIGN_VECTOR(d, ad_x, it, num_contacts)
+    dt = ad_x(it++);
+    mu = ad_x(it++);
+    torque_limit = ad_x(it++);
 
     std::tie(q, u) = step();
 
@@ -148,7 +148,7 @@ void Dynamics::evaluate(const Params& params, EvalOption option) {
     Eigen::VectorXd x(input_dims);
     Eigen::VectorXd y(output_dims);
 
-    x << params.x, params.u, params.d;
+    x << params.x, params.u, params.d, params.dt, params.mu, params.torque_limit;
     y = model->ForwardZero(x);
 
     Eigen::DenseIndex it = 0;

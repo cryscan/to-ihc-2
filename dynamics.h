@@ -14,6 +14,9 @@ struct Parameter<Dynamics> {
     State x;
     Action u;
     Contact d;
+    double dt{0.01};
+    double mu{1.0};
+    double torque_limit{60.0};
 };
 
 struct ContactBase {
@@ -53,7 +56,7 @@ protected:
 };
 
 struct Dynamics :
-        public ADBase<Dynamics, state_dims + action_dims + num_contacts, state_dims>,
+        public ADBase<Dynamics, state_dims + action_dims + num_contacts + 3, state_dims>,
         public ContactBase {
     using Base = decltype(base_type())::type;
 
@@ -74,7 +77,7 @@ struct Dynamics :
     using ContactBase::Vector3;
     using ContactBase::Matrix3;
 
-    Dynamics(const std::string& name, int num_iters, double dt, double mu, double torque_limit);
+    Dynamics(const std::string& name, int num_iters);
 
     void build_map() override;
     void evaluate(const Params& params, EvalOption option) override;
@@ -85,9 +88,10 @@ struct Dynamics :
 
 private:
     const int num_iters;
-    const Scalar dt;
-    const Scalar mu;
-    const Scalar torque_limit;
+
+    Scalar dt;
+    Scalar mu;
+    Scalar torque_limit;
 
     JointState q, u;
     Action tau;
