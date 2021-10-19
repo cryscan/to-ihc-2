@@ -17,7 +17,7 @@ struct Parameter<Stabilizer> {
 };
 
 struct Stabilizer :
-        public ADBase<Stabilizer, state_dims + joint_space_dims + num_contacts, action_dims>,
+        public ADBase<Stabilizer, 0, state_dims + joint_space_dims + num_contacts, action_dims>,
         public ContactBase {
     using Base = decltype(base_type())::type;
 

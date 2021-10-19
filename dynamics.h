@@ -13,10 +13,11 @@ template<>
 struct Parameter<Dynamics> {
     State x;
     Action u;
+
     Contact d;
-    double dt{0.01};
-    double mu{1.0};
-    double torque_limit{60.0};
+    double dt = 0.01;
+    double mu = 1.0;
+    double torque_limit = 60.0;
 };
 
 struct ContactBase {
@@ -56,7 +57,7 @@ protected:
 };
 
 struct Dynamics :
-        public ADBase<Dynamics, state_dims + action_dims + num_contacts + 3, state_dims>,
+        public ADBase<Dynamics, state_dims + action_dims, num_contacts + 3, state_dims, true>,
         public ContactBase {
     using Base = decltype(base_type())::type;
 
@@ -65,9 +66,6 @@ struct Dynamics :
     using Base::JointState;
     using Base::State;
     using Base::Action;
-
-    using Base::input_dims;
-    using Base::output_dims;
 
     using ContactBase::ContactJacobian;
     using ContactBase::ContactJacobianTranspose;

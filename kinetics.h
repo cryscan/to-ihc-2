@@ -14,16 +14,13 @@ struct Parameter<Kinetics> {
     State x;
 };
 
-struct Kinetics : public ADBase<Kinetics, state_dims, 9> {
+struct Kinetics : public ADBase<Kinetics, 0, state_dims, 9> {
     using Base = decltype(base_type())::type;
 
     using Base::Scalar;
     using Base::ScalarTraits;
     using Base::JointState;
     using Base::Action;
-
-    using Base::input_dims;
-    using Base::output_dims;
 
     using Vector3 = Robot::rcg::Vector3;
     using Affine3 = Eigen::Transform<Scalar, 3, Eigen::Affine>;

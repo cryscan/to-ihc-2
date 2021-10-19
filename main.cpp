@@ -29,15 +29,17 @@ auto make_dynamics(std::istream& is) {
 }
 
 auto make_cost(std::istream& is, const std::string& name, const State& x_star) {
-    Eigen::VectorXd scale_state(8);
-    for (int i = 0; i < scale_state.size(); ++i)
-        is >> scale_state(i);
+    Eigen::VectorXd scale_x(8);
+    for (int i = 0; i < scale_x.size(); ++i)
+        is >> scale_x(i);
 
-    Eigen::Vector2d scale_action;
-    is >> scale_action(0) >> scale_action(1);
+    Eigen::Vector2d scale_u;
+    is >> scale_u(0) >> scale_u(1);
 
-    Cost cost(name, scale_state, scale_action);
+    Cost cost(name);
     cost.params.x_star = x_star;
+    cost.params.scale_x = scale_x;
+    cost.params.scale_u = scale_u;
 
     return cost;
 }

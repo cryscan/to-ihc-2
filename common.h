@@ -15,6 +15,14 @@
 #include "hopper/jsim.h"
 #include "hopper/inverse_dynamics.h"
 
+#define ASSIGN_VECTOR(to, from, it, size) (to) = (from).segment<(size)>(it); (it) += (size);
+#define ASSIGN_COLS(to, from, it, size) (to) = (from).middleCols<(size)>(it); (it) += (size);
+#define FILL_VECTOR(to, from, it, size) (to).segment<(size)>(it) = (from); (it) += (size);
+#define FILL_ROWS(to, from, it, size) (to).middleRows<(size)>(it) = (from); (it) += (size);
+
+#define MATRIX_AS_VECTOR(mat) Eigen::Map<Eigen::VectorXd>((mat).data(), (mat).size())
+#define MATRIX_AS_VECTOR_AD(mat) Eigen::Map<ADVector>((mat).data(), (mat).size())
+
 // change this to switch robot model
 namespace Robot = Hopper;
 
@@ -38,7 +46,7 @@ template<typename T>
 struct Parameter {
 };
 
-template<typename T, int InputDims, int OutputDims>
+template<typename T, int InputDims, int ParamDims, int OutputDims, bool ComputeJacobian = false>
 struct ADBase {
     using Params = Parameter<T>;
 
@@ -50,21 +58,21 @@ struct ADBase {
     using Action = Robot::rcg::Matrix<action_dims, 1>;
     using Contact = Robot::rcg::Matrix<num_contacts, 1>;
 
-    using Jacobian = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
-
     static constexpr int input_dims = InputDims;
+    static constexpr int param_dims = ParamDims;
     static constexpr int output_dims = OutputDims;
+    static constexpr bool compute_jacobian = ComputeJacobian;
 
-    explicit ADBase(const std::string& name, bool create_jacobian = true) :
+    explicit ADBase(const std::string& name) :
             name(name),
-            library_name(name + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION),
-            create_jacobian(create_jacobian) {}
+            jacobian_name(name + "_jacobian"),
+            library_name(name + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION) {}
 
     ADBase(const ADBase& other) :
             params(other.params),
             name(other.name),
-            library_name(other.library_name),
-            create_jacobian(create_jacobian) {}
+            jacobian_name(other.jacobian_name),
+            library_name(other.library_name) {}
 
     virtual void build_map() {
         this->build_map();
@@ -82,52 +90,83 @@ struct ADBase {
     void evaluate(EvalOption option = EvalOption::FIRST_ORDER) { this->evaluate(params, option); }
     virtual void evaluate(const Params&, EvalOption option) {};
 
-    static constexpr std::remove_pointer<ADBase<T, input_dims, output_dims>> base_type() {};
-    const bool create_jacobian;
+    static constexpr std::remove_pointer<ADBase<T, input_dims, param_dims, output_dims, compute_jacobian>>
+    base_type() {};
 
     Params params;
 
 protected:
     const std::string name;
+    const std::string jacobian_name;
     const std::string library_name;
 
-    Robot::rcg::Matrix<Eigen::Dynamic, 1> ad_x{input_dims};
-    Robot::rcg::Matrix<Eigen::Dynamic, 1> ad_y{output_dims};
-    CppAD::ADFun<ScalarTraits::ValueType> ad_fun;
+    using ScalarVector = Robot::rcg::Matrix<Eigen::Dynamic, 1>;
+    using ADVector = Eigen::Matrix<typename ScalarTraits::AD, Eigen::Dynamic, 1>;
+
+    ScalarVector ad_x{input_dims + param_dims};
+    ScalarVector ad_y{output_dims};
+    ADVector ad_jac{output_dims * input_dims};
+
+    CppAD::ADFun<ScalarTraits::ValueType> ad_fun, ad_jacobian_fun;
 
     std::unique_ptr<CppAD::cg::DynamicLib<double>> lib;
-    std::unique_ptr<CppAD::cg::GenericModel<double>> model;
+    std::unique_ptr<CppAD::cg::GenericModel<double>> model, jacobian_model;
+
+    void build_jacobian() {
+        ADVector ad_x_ = ad_x.cast<typename ScalarTraits::AD>();
+        CppAD::Independent(ad_x_);
+
+        using FullJacobian = Eigen::Matrix<Scalar, output_dims, input_dims + param_dims, Eigen::RowMajor>;
+        using Jacobian = Eigen::Matrix<Scalar, output_dims, input_dims, Eigen::RowMajor>;
+
+        FullJacobian full_jacobian;
+        MATRIX_AS_VECTOR_AD(full_jacobian) = ad_fun.base2ad().Jacobian(ad_x_);
+
+        Jacobian jacobian = full_jacobian.template leftCols<input_dims>();
+        ad_jac = MATRIX_AS_VECTOR_AD(jacobian);
+
+        ad_jacobian_fun.Dependent(ad_jac);
+        ad_jacobian_fun.optimize("no_compare_op");
+    }
 
     void compile_library() {
         using namespace CppAD::cg;
 
-        ModelCSourceGen<double> c_source_gen(ad_fun, name);
-        c_source_gen.setCreateForwardZero(true);
-        c_source_gen.setCreateJacobian(create_jacobian);
+        std::unique_ptr<ModelCSourceGen < double>>
+        c_source_gen, jacobian_c_source_gen;
+        std::unique_ptr<ModelLibraryCSourceGen < double>>
+        library_c_source_gen;
 
-        ModelLibraryCSourceGen<double> library_c_source_gen(c_source_gen);
-        SaveFilesModelLibraryProcessor<double> save_files(library_c_source_gen);
-        DynamicModelLibraryProcessor<double> processor(library_c_source_gen, name);
+        c_source_gen = std::make_unique<ModelCSourceGen < double>>
+        (ad_fun, name);
+        if constexpr (compute_jacobian) {
+            jacobian_c_source_gen = std::make_unique<ModelCSourceGen < double>>
+            (ad_jacobian_fun, jacobian_name);
+            library_c_source_gen = std::make_unique<ModelLibraryCSourceGen < double>>
+            (*c_source_gen,
+                    *jacobian_c_source_gen);
+        } else {
+            library_c_source_gen = std::make_unique<ModelLibraryCSourceGen < double>>
+            (*c_source_gen);
+        }
+
+        SaveFilesModelLibraryProcessor<double> save_files(*library_c_source_gen);
+        DynamicModelLibraryProcessor<double> processor(*library_c_source_gen, name);
         GccCompiler<double> compiler;
 
         save_files.saveSources();
 
         lib = processor.createDynamicLibrary(compiler);
         model = lib->model(name);
+        if constexpr (compute_jacobian) jacobian_model = lib->model(jacobian_name);
     }
 
     void load_library() {
         using namespace CppAD::cg;
         lib = std::make_unique<LinuxDynamicLib<double>>(library_name);
         model = lib->model(name);
+        if constexpr (compute_jacobian) jacobian_model = lib->model(jacobian_name);
     }
 };
-
-#define ASSIGN_VECTOR(to, from, it, size) (to) = (from).segment<(size)>(it); (it) += (size);
-#define ASSIGN_COLS(to, from, it, size) (to) = (from).middleCols<(size)>(it); (it) += (size);
-#define FILL_VECTOR(to, from, it, size) (to).segment<(size)>(it) = (from); (it) += (size);
-#define FILL_ROWS(to, from, it, size) (to).middleRows<(size)>(it) = (from); (it) += (size);
-
-#define JACOBIAN_VIEW(jac) Eigen::Map<Eigen::VectorXd>((jac).data(), (jac).size())
 
 #endif //TO_IHC_2_COMMON_H

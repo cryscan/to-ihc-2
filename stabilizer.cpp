@@ -7,7 +7,7 @@
 using namespace Robot;
 
 Stabilizer::Stabilizer(const std::string& name, const ::State& gain) :
-        Base(name, false),
+        Base(name),
         gain(gain.template cast<Scalar>()) {}
 
 void Stabilizer::build_map() {
@@ -26,7 +26,7 @@ void Stabilizer::build_map() {
 }
 
 void Stabilizer::evaluate(const Base::Params& params, EvalOption option) {
-    Eigen::VectorXd x(input_dims);
+    Eigen::VectorXd x(input_dims + param_dims);
     Eigen::VectorXd y(output_dims);
 
     x << params.x, params.q_star, params.d;

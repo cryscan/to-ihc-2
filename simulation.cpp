@@ -9,8 +9,6 @@
 #include "common.h"
 #include "kinetics.h"
 #include "dynamics.h"
-#include "cost.h"
-#include "lqr.h"
 #include "slip.h"
 
 std::unique_ptr<Kinetics> kinetics;

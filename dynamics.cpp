@@ -142,10 +142,12 @@ void Dynamics::build_map() {
 
     ad_fun.Dependent(ad_x, ad_y);
     ad_fun.optimize("no_compare_op");
+
+    build_jacobian();
 }
 
 void Dynamics::evaluate(const Params& params, EvalOption option) {
-    Eigen::VectorXd x(input_dims);
+    Eigen::VectorXd x(input_dims + param_dims);
     Eigen::VectorXd y(output_dims);
 
     x << params.x, params.u, params.d, params.dt, params.mu, params.torque_limit;
@@ -155,9 +157,10 @@ void Dynamics::evaluate(const Params& params, EvalOption option) {
     ASSIGN_VECTOR(f, y, it, state_dims)
 
     if (option == EvalOption::FIRST_ORDER) {
-        Jacobian jacobian(output_dims, input_dims);
-        JACOBIAN_VIEW(jacobian) = model->Jacobian(x);
-        jacobian = jacobian.topRows<state_dims>();
+        using Jacobian = Eigen::Matrix<double, output_dims, input_dims, Eigen::RowMajor>;
+
+        Jacobian jacobian;
+        MATRIX_AS_VECTOR(jacobian) = jacobian_model->ForwardZero(x);
 
         it = 0;
         ASSIGN_COLS(df_dx, jacobian, it, state_dims)

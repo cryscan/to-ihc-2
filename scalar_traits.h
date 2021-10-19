@@ -10,10 +10,10 @@
 
 template<typename Base>
 class CppADCodeGenTraits {
+public:
     typedef typename CppAD::cg::CG<Base> CG;
     typedef typename CppAD::AD<CG> AD;
 
-public:
     struct Scalar : public AD {
         Scalar() = default;
         Scalar(const AD& ad) : AD(ad) {}

@@ -11,11 +11,15 @@ struct Cost;
 
 template<>
 struct Parameter<Cost> {
-    State x, x_star;
+    State x;
     Action u;
+
+    State x_star;
+    State scale_x;
+    Action scale_u;
 };
 
-struct Cost : public ADBase<Cost, state_dims + state_dims + action_dims, 1> {
+struct Cost : public ADBase<Cost, state_dims + action_dims, state_dims + state_dims + action_dims, 1, true> {
     using Base = decltype(base_type())::type;
     using Base::Params;
 
@@ -27,7 +31,7 @@ struct Cost : public ADBase<Cost, state_dims + state_dims + action_dims, 1> {
     using Base::input_dims;
     using Base::output_dims;
 
-    Cost(const std::string& name, const ::State& scale_state, const ::Action& scale_action);
+    explicit Cost(const std::string& name);
 
     void build_map() override;
     void evaluate(const Params& params, EvalOption option) override;
@@ -42,11 +46,12 @@ struct Cost : public ADBase<Cost, state_dims + state_dims + action_dims, 1> {
     // const Eigen::Matrix<double, action_dims, 1> scale_action;
 
 private:
-    const Robot::rcg::Matrix<state_dims, 1> scale_state;
-    const Robot::rcg::Matrix<action_dims, 1> scale_action;
-
-    State x, x_star;
+    State x_;
     Action u;
+
+    State x_star;
+    State scale_x;
+    Action scale_u;
 
     double f;
     Eigen::Matrix<double, 1, state_dims> df_dx;

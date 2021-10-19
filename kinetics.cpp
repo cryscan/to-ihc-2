@@ -4,7 +4,7 @@
 
 #include "kinetics.h"
 
-Kinetics::Kinetics(const std::string& name) : Base(name, false) {}
+Kinetics::Kinetics(const std::string& name) : Base(name) {}
 
 void Kinetics::build_map() {
     CppAD::Independent(ad_x);
@@ -23,7 +23,7 @@ void Kinetics::build_map() {
 }
 
 void Kinetics::evaluate(const ADBase::Params& params, EvalOption option) {
-    Eigen::VectorXd x(input_dims);
+    Eigen::VectorXd x(input_dims + param_dims);
     Eigen::VectorXd y(output_dims);
 
     x << params.x;
