@@ -19,7 +19,7 @@ struct Parameter<Cost> {
     Action scale_u;
 };
 
-struct Cost : public ADBase<Cost, state_dims + action_dims, state_dims + state_dims + action_dims, 1, true> {
+struct Cost : public ADBase<Cost, state_dims + action_dims, state_dims + state_dims + action_dims, 1> {
     using Base = decltype(base_type())::type;
     using Base::Params;
 

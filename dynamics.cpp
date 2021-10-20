@@ -151,7 +151,7 @@ void Dynamics::evaluate(const Params& params, EvalOption option) {
     Eigen::VectorXd y(output_dims);
 
     x << params.x, params.u, params.d, params.dt, params.mu, params.torque_limit;
-    y = model->ForwardZero(x);
+    y = models[0]->ForwardZero(x);
 
     Eigen::DenseIndex it = 0;
     ASSIGN_VECTOR(f, y, it, state_dims)
@@ -160,7 +160,7 @@ void Dynamics::evaluate(const Params& params, EvalOption option) {
         using Jacobian = Eigen::Matrix<double, output_dims, input_dims, Eigen::RowMajor>;
 
         Jacobian jacobian;
-        MATRIX_AS_VECTOR(jacobian) = jacobian_model->ForwardZero(x);
+        MATRIX_AS_VECTOR(jacobian) = models[1]->ForwardZero(x);
 
         it = 0;
         ASSIGN_COLS(df_dx, jacobian, it, state_dims)

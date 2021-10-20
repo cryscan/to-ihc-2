@@ -57,7 +57,7 @@ protected:
 };
 
 struct Dynamics :
-        public ADBase<Dynamics, state_dims + action_dims, num_contacts + 3, state_dims, true>,
+        public ADBase<Dynamics, state_dims + action_dims, num_contacts + 3, state_dims>,
         public ContactBase {
     using Base = decltype(base_type())::type;
 

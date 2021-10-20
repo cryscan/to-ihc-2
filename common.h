@@ -46,7 +46,7 @@ template<typename T>
 struct Parameter {
 };
 
-template<typename T, int InputDims, int ParamDims, int OutputDims, bool ComputeJacobian = false>
+template<typename T, int InputDims, int ParamDims, int OutputDims>
 struct ADBase {
     using Params = Parameter<T>;
 
@@ -61,7 +61,6 @@ struct ADBase {
     static constexpr int input_dims = InputDims;
     static constexpr int param_dims = ParamDims;
     static constexpr int output_dims = OutputDims;
-    static constexpr bool compute_jacobian = ComputeJacobian;
 
     explicit ADBase(const std::string& name) :
             name(name),
@@ -90,7 +89,7 @@ struct ADBase {
     void evaluate(EvalOption option = EvalOption::FIRST_ORDER) { this->evaluate(params, option); }
     virtual void evaluate(const Params&, EvalOption option) {};
 
-    static constexpr std::remove_pointer<ADBase<T, input_dims, param_dims, output_dims, compute_jacobian>>
+    static constexpr std::remove_pointer<ADBase<T, input_dims, param_dims, output_dims>>
     base_type() {};
 
     Params params;
@@ -105,15 +104,16 @@ protected:
 
     ScalarVector ad_x{input_dims + param_dims};
     ScalarVector ad_y{output_dims};
-    ADVector ad_jac{output_dims * input_dims};
 
-    CppAD::ADFun<ScalarTraits::ValueType> ad_fun, ad_jacobian_fun;
+    CppAD::ADFun<ScalarTraits::ValueType> ad_fun, ad_fun_;
 
     std::unique_ptr<CppAD::cg::DynamicLib<double>> lib;
-    std::unique_ptr<CppAD::cg::GenericModel<double>> model, jacobian_model;
+    std::unique_ptr<CppAD::cg::GenericModel<double>> models[2];
 
     void build_jacobian() {
         ADVector ad_x_ = ad_x.cast<typename ScalarTraits::AD>();
+        ADVector ad_y_(output_dims * input_dims);
+
         CppAD::Independent(ad_x_);
 
         using FullJacobian = Eigen::Matrix<Scalar, output_dims, input_dims + param_dims, Eigen::RowMajor>;
@@ -123,49 +123,47 @@ protected:
         MATRIX_AS_VECTOR_AD(full_jacobian) = ad_fun.base2ad().Jacobian(ad_x_);
 
         Jacobian jacobian = full_jacobian.template leftCols<input_dims>();
-        ad_jac = MATRIX_AS_VECTOR_AD(jacobian);
+        ad_y_ << MATRIX_AS_VECTOR_AD(jacobian);
 
-        ad_jacobian_fun.Dependent(ad_jac);
-        ad_jacobian_fun.optimize("no_compare_op");
+        ad_fun_.Dependent(ad_y_);
+        ad_fun_.optimize("no_compare_op");
+    }
+
+    void compile_library(CppAD::cg::ModelLibraryCSourceGen<double>& library_c_source_gen) {
+        using namespace CppAD::cg;
+
+        DynamicModelLibraryProcessor<double> processor(library_c_source_gen, name);
+        GccCompiler<double> compiler;
+
+        SaveFilesModelLibraryProcessor<double> save_files(library_c_source_gen);
+        save_files.saveSources();
+
+        lib = processor.createDynamicLibrary(compiler);
     }
 
     void compile_library() {
         using namespace CppAD::cg;
 
-        std::unique_ptr<ModelCSourceGen < double>>
-        c_source_gen, jacobian_c_source_gen;
-        std::unique_ptr<ModelLibraryCSourceGen < double>>
-        library_c_source_gen;
-
-        c_source_gen = std::make_unique<ModelCSourceGen < double>>
-        (ad_fun, name);
-        if constexpr (compute_jacobian) {
-            jacobian_c_source_gen = std::make_unique<ModelCSourceGen < double>>
-            (ad_jacobian_fun, jacobian_name);
-            library_c_source_gen = std::make_unique<ModelLibraryCSourceGen < double>>
-            (*c_source_gen,
-                    *jacobian_c_source_gen);
+        if constexpr (input_dims == 0) {
+            ModelCSourceGen<double> c_source_gen(ad_fun, name);
+            ModelLibraryCSourceGen<double> library_c_source_gen(c_source_gen);
+            compile_library(library_c_source_gen);
         } else {
-            library_c_source_gen = std::make_unique<ModelLibraryCSourceGen < double>>
-            (*c_source_gen);
+            ModelCSourceGen<double> c_source_gen[2] = {{ad_fun,  name},
+                                                       {ad_fun_, jacobian_name}};
+            ModelLibraryCSourceGen<double> library_c_source_gen(c_source_gen[0], c_source_gen[1]);
+            compile_library(library_c_source_gen);
         }
 
-        SaveFilesModelLibraryProcessor<double> save_files(*library_c_source_gen);
-        DynamicModelLibraryProcessor<double> processor(*library_c_source_gen, name);
-        GccCompiler<double> compiler;
-
-        save_files.saveSources();
-
-        lib = processor.createDynamicLibrary(compiler);
-        model = lib->model(name);
-        if constexpr (compute_jacobian) jacobian_model = lib->model(jacobian_name);
+        models[0] = lib->model(name);
+        if constexpr(input_dims != 0) models[1] = lib->model(jacobian_name);
     }
 
     void load_library() {
         using namespace CppAD::cg;
         lib = std::make_unique<LinuxDynamicLib<double>>(library_name);
-        model = lib->model(name);
-        if constexpr (compute_jacobian) jacobian_model = lib->model(jacobian_name);
+        models[0] = lib->model(name);
+        if (input_dims != 0) models[1] = lib->model(jacobian_name);
     }
 };
 

@@ -42,11 +42,11 @@ void Cost::evaluate(const Params& params, EvalOption option) {
     Eigen::VectorXd y(output_dims);
 
     x << params.x, params.u, params.x_star, params.scale_x, params.scale_u;
-    y = model->ForwardZero(x);
+    y = models[0]->ForwardZero(x);
     f = y(0);
 
     if (option == EvalOption::FIRST_ORDER) {
-        Jacobian jacobian = jacobian_model->ForwardZero(x);
+        Jacobian jacobian = models[1]->ForwardZero(x);
         Eigen::DenseIndex it = 0;
         ASSIGN_COLS(df_dx, jacobian, it, state_dims)
         ASSIGN_COLS(df_du, jacobian, it, action_dims)

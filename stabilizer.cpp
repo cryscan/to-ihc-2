@@ -30,7 +30,7 @@ void Stabilizer::evaluate(const Base::Params& params, EvalOption option) {
     Eigen::VectorXd y(output_dims);
 
     x << params.x, params.q_star, params.d;
-    y = model->ForwardZero(x);
+    y = models[0]->ForwardZero(x);
 
     f = y;
 }
