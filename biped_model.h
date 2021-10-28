@@ -15,27 +15,31 @@
 
 #include "robot_model.h"
 
-class BipedModel : public RobotModelBase<
-        Biped::rcg::ScalarTraits::Scalar,
-        Biped::rcg::JointSpaceDimension,
-        Biped::rcg::JointSpaceDimension,
-        2> {
-public:
-    BipedModel();
+namespace Biped {
+    class Model : public rbd::ModelBase<
+            Biped::rcg::ScalarTraits::Scalar,
+            Biped::rcg::JointSpaceDimension,
+            Biped::rcg::JointSpaceDimension,
+            2> {
+    public:
+        Model();
 
-    std::array<Vector3, num_contacts> end_effector_positions() const override;
+        Percussion end_effector_positions() const override;
 
-private:
-    // kinematics
-    mutable Biped::rcg::MotionTransforms motion_transforms;
-    mutable Biped::rcg::ForceTransforms force_transforms;
-    mutable Biped::rcg::HomogeneousTransforms homogeneous_transforms;
-    mutable Biped::rcg::Jacobians jacobians;
+        Inertia inverse_inertia_matrix() const override;
 
-    // dynamics
-    mutable Biped::rcg::InertiaProperties inertia_properties;
-    mutable Biped::rcg::InverseDynamics inverse_dynamics;
-    mutable Biped::rcg::JSIM jsim;
-};
+    private:
+        // kinematics
+        mutable Biped::rcg::MotionTransforms motion_transforms;
+        mutable Biped::rcg::ForceTransforms force_transforms;
+        mutable Biped::rcg::HomogeneousTransforms homogeneous_transforms;
+        mutable Biped::rcg::Jacobians jacobians;
+
+        // dynamics
+        mutable Biped::rcg::InertiaProperties inertia_properties;
+        mutable Biped::rcg::InverseDynamics inverse_dynamics;
+        mutable Biped::rcg::JSIM jsim;
+    };
+}
 
 #endif //TO_IHC_2_BIPED_MODEL_H

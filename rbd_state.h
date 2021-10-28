@@ -77,6 +77,12 @@ namespace rbd {
         const auto& base_rotation() const { return *reinterpret_cast<BaseRotationType const*>(this->data()); }
         const auto& base_position() const { return *reinterpret_cast<BasePositionType const*>(this->data() + 4); }
         const auto& joint_position() const { return *reinterpret_cast<JointPositionType const*>(this->data() + 7); }
+
+        auto base_pose() const {
+            Eigen::Transform<Scalar, 3, Eigen::Affine> transform(base_rotation());
+            transform.translation() = base_position();
+            return transform;
+        }
     };
 
     template<typename Scalar, int JointSpaceDims, int Options = 0>

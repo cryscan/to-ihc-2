@@ -92,4 +92,41 @@ struct CppAD::ok_if_S_same_as_T<CppAD::AD<CppAD::cg::CG<Base>>, typename CppADCo
 };
 #endif
 
+template<typename ScalarTraits>
+struct LLT {
+    using Scalar = typename ScalarTraits::Scalar;
+
+    template<int Dims>
+    inline static Eigen::Matrix<Scalar, Dims, Dims> cholesky(const Eigen::Matrix<Scalar, Dims, Dims>& A) {
+        return A.llt().matrixL();
+    }
+
+    template<int Dims>
+    inline static Eigen::Matrix<Scalar, Dims, Dims> inverse(const Eigen::Matrix<Scalar, Dims, Dims>& A) {
+        return A.inverse();
+    }
+};
+
+template<typename T>
+struct LLT<CppADCodeGenTraits<T>> {
+    using ScalarTraits = CppADCodeGenTraits<T>;
+    using Scalar = typename ScalarTraits::Scalar;
+
+    template<int Dims>
+    inline static Eigen::Matrix<Scalar, Dims, Dims> cholesky(const Eigen::Matrix<Scalar, Dims, Dims>& A) {
+        return ScalarTraits::cholesky(A);
+    }
+
+    template<int Dims>
+    inline static Eigen::Matrix<Scalar, Dims, Dims> inverse(const Eigen::Matrix<Scalar, Dims, Dims>& A) {
+        auto LU = ScalarTraits::cholesky(A);
+        auto inv = Eigen::Matrix<Scalar, Dims, Dims>::Identity();
+        for (int i = 0; i < Dims; ++i) {
+            Eigen::Matrix<Scalar, Dims, 1> col = inv.col(i);
+            inv.col(i) << ScalarTraits::cholesky_solve(LU, col);
+        }
+        return inv;
+    }
+};
+
 #endif //TO_IHC_2_SCALAR_TRAITS_H
