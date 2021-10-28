@@ -63,25 +63,25 @@ namespace Biped {
 
         {
             auto t = Eigen::Transform<Scalar, 3, Eigen::Affine>(homogeneous_transforms.fr_trunk_X_L_foot(q));
-            Vector3 p = t.translation();
+            Vector3 p = r * t.translation();
             Matrix3 px = cross_product(p);
 
             JacobianJoint jacobian_joint = JacobianJoint::Zero();
             jacobian_joint.middleCols<3>(0) = r * jacobians.fr_trunk_J_L_foot(q).bottomRows<3>();
 
-            Matrix3 jacobian_base_angular = r * (-px);
+            Matrix3 jacobian_base_angular = -px;
             Matrix3 jacobian_base_linear = Matrix3::Identity();
             jacobian.middleRows<3>(0) << jacobian_base_angular, jacobian_base_linear, jacobian_joint;
         }
         {
             auto t = Eigen::Transform<Scalar, 3, Eigen::Affine>(homogeneous_transforms.fr_trunk_X_R_foot(q));
-            Vector3 p = t.translation();
+            Vector3 p = r * t.translation();
             Matrix3 px = cross_product(p);
 
             JacobianJoint jacobian_joint = JacobianJoint::Zero();
             jacobian_joint.middleCols<3>(3) = r * jacobians.fr_trunk_J_R_foot(q).bottomRows<3>();
 
-            Matrix3 jacobian_base_angular = r * (-px);
+            Matrix3 jacobian_base_angular = -px;
             Matrix3 jacobian_base_linear = Matrix3::Identity();
             jacobian.middleRows<3>(3) << jacobian_base_angular, jacobian_base_linear, jacobian_joint;
         }

@@ -26,7 +26,11 @@ int main() {
      */
 
     Biped::Model biped_model;
-    biped_model.state.position().base_position() << 1, 0, 1;
+    biped_model.state.position().base_position() << 0, 0, 1;
+
+    Biped::Model::VelocityType delta;
+    delta(2) = M_PI_2;
+    biped_model.state.position() += delta;
 
     auto positions = biped_model.end_effector_positions();
     std::cout << positions.transpose() << '\n' << std::endl;
