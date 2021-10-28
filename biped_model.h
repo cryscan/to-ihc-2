@@ -17,28 +17,33 @@
 
 namespace Biped {
     class Model : public rbd::ModelBase<
-            Biped::rcg::ScalarTraits::Scalar,
-            Biped::rcg::JointSpaceDimension,
-            Biped::rcg::JointSpaceDimension,
+            Model,
+            rcg::ScalarTraits::Scalar,
+            rcg::JointSpaceDimension,
+            rcg::JointSpaceDimension,
             2> {
     public:
         Model();
 
-        Percussion end_effector_positions() const override;
+        ContactVector end_effector_positions() const override;
 
         Inertia inverse_inertia_matrix() const override;
+        AccelerationType nonlinear_terms() const override;
+        ContactJacobian contact_jacobian() const override;
 
     private:
         // kinematics
-        mutable Biped::rcg::MotionTransforms motion_transforms;
-        mutable Biped::rcg::ForceTransforms force_transforms;
-        mutable Biped::rcg::HomogeneousTransforms homogeneous_transforms;
-        mutable Biped::rcg::Jacobians jacobians;
+        mutable rcg::MotionTransforms motion_transforms;
+        mutable rcg::ForceTransforms force_transforms;
+        mutable rcg::HomogeneousTransforms homogeneous_transforms;
+        mutable rcg::Jacobians jacobians;
 
         // dynamics
-        mutable Biped::rcg::InertiaProperties inertia_properties;
-        mutable Biped::rcg::InverseDynamics inverse_dynamics;
-        mutable Biped::rcg::JSIM jsim;
+        mutable rcg::InertiaProperties inertia_properties;
+        mutable rcg::InverseDynamics inverse_dynamics;
+        mutable rcg::JSIM jsim;
+
+        static Matrix3 cross_product(const Vector3& p);
     };
 }
 

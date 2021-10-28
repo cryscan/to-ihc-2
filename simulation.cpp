@@ -31,5 +31,7 @@ int main() {
     auto positions = biped_model.end_effector_positions();
     std::cout << positions.transpose() << '\n' << std::endl;
 
-    std::cout << biped_model.inverse_inertia_matrix() << std::endl;
+    std::cout << biped_model.inverse_inertia_matrix() << '\n' << std::endl;
+    std::cout << biped_model.nonlinear_terms().transpose() << '\n' << std::endl;
+    std::cout << biped_model.contact_jacobian();
 }
