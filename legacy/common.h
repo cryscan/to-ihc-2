@@ -8,12 +8,12 @@
 #include <memory>
 #include <type_traits>
 
-#include "hopper/declarations.h"
-#include "hopper/transforms.h"
-#include "hopper/jacobians.h"
-#include "hopper/inertia_properties.h"
-#include "hopper/jsim.h"
-#include "hopper/inverse_dynamics.h"
+#include "../biped/declarations.h"
+#include "../biped/transforms.h"
+#include "../biped/jacobians.h"
+#include "../biped/inertia_properties.h"
+#include "../biped/jsim.h"
+#include "../biped/inverse_dynamics.h"
 
 #define ASSIGN_VECTOR(to, from, it, size) (to) = (from).segment<(size)>(it); (it) += (size);
 #define ASSIGN_COLS(to, from, it, size) (to) = (from).middleCols<(size)>(it); (it) += (size);
@@ -24,9 +24,9 @@
 #define MATRIX_AS_VECTOR_AD(mat) Eigen::Map<ADVector>((mat).data(), (mat).size())
 
 // change this to switch robot model
-namespace Robot = Hopper;
+namespace Robot = Biped;
 
-static constexpr int joint_space_dims = Hopper::rcg::JointSpaceDimension;
+static constexpr int joint_space_dims = Robot::rcg::JointSpaceDimension;
 static constexpr int state_dims = joint_space_dims + joint_space_dims;
 static constexpr int action_dims = 2;
 static constexpr int num_contacts = 3;

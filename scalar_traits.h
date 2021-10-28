@@ -6,6 +6,7 @@
 #define TO_IHC_2_SCALAR_TRAITS_H
 
 #include <type_traits>
+#include <Eigen/Core>
 #include <cppad/cg.hpp>
 
 template<typename Base>
@@ -19,8 +20,6 @@ public:
         Scalar(const AD& ad) : AD(ad) {}
         Scalar(const CG& cg) : AD(cg) {}
         Scalar(const Base& b) : AD(b) {}
-
-        explicit operator Base() const { return CppAD::Value(*this).getValue(); }
     };
 
     typedef typename Scalar::value_type ValueType;
