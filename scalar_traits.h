@@ -6,14 +6,15 @@
 #define TO_IHC_2_SCALAR_TRAITS_H
 
 #include <type_traits>
+#include <algorithm>
+
 #include <Eigen/Core>
 #include <cppad/cg.hpp>
 
 template<typename Base>
-class CppADCodeGenTraits {
-public:
-    typedef typename CppAD::cg::CG<Base> CG;
-    typedef typename CppAD::AD<CG> AD;
+struct CppADCodeGenTraits {
+    using CG = typename CppAD::cg::CG<Base>;
+    using AD = typename CppAD::AD<CG>;
 
     struct Scalar : public AD {
         Scalar() = default;
@@ -22,7 +23,7 @@ public:
         Scalar(const Base& b) : AD(b) {}
     };
 
-    typedef typename Scalar::value_type ValueType;
+    using ValueType = Base;
 
     inline static Scalar exp(const Scalar& x) { return CppAD::exp(x); }
     inline static Scalar sin(const Scalar& x) { return CppAD::sin(x); }
@@ -31,20 +32,43 @@ public:
     inline static Scalar sqrt(const Scalar& x) { return CppAD::sqrt(x); }
     inline static Scalar abs(const Scalar& x) { return CppAD::abs(x); }
 
-    inline static Scalar min(const Scalar& x, const Scalar& y) { return CppAD::CondExpLt(x, y, x, y); }
-    inline static Scalar max(const Scalar& x, const Scalar& y) { return CppAD::CondExpGt(x, y, x, y); }
-
     template<int Dims>
     inline static Eigen::Matrix<Scalar, Dims, 1>
     solve(const Eigen::Matrix<Scalar, Dims, Dims>& A, const Eigen::Matrix<Scalar, Dims, 1>& b) {
         auto LU = cholesky(A);
         return cholesky_solve(LU, b);
     }
+};
+
+namespace std {
+    template<typename Base>
+    const typename CppADCodeGenTraits<Base>::Scalar& min(typename CppADCodeGenTraits<Base>::Scalar& a,
+                                                         typename CppADCodeGenTraits<Base>::Scalar& b) {
+        return CppAD::CondExpLt(a, b, a, b);
+    }
+
+    template<typename Base>
+    const typename CppADCodeGenTraits<Base>::Scalar& max(const typename CppADCodeGenTraits<Base>::Scalar& a,
+                                                         const typename CppADCodeGenTraits<Base>::Scalar& b) {
+        return CppAD::CondExpGt(a, b, a, b);
+    }
+}
+
+#ifndef NDEBUG
+template<typename Base>
+struct CppAD::ok_if_S_same_as_T<CppAD::AD<CppAD::cg::CG<Base>>, typename CppADCodeGenTraits<Base>::Scalar> {
+    CppAD::AD<CppAD::cg::CG<Base>> value;
+};
+#endif
+
+template<typename ScalarTraits>
+struct LLT {
+    using Scalar = typename ScalarTraits::Scalar;
 
     // custom LU factorization
     // https://bitbucket.org/adrlab/hyq_gen_ad/src/master/include/external/iit/rbd/traits/CppADCodegenTrait.h
     template<int Dims>
-    static Eigen::Matrix<Scalar, Dims, Dims>
+    inline static Eigen::Matrix<Scalar, Dims, Dims>
     cholesky(const Eigen::Matrix<Scalar, Dims, Dims>& A) {
         Eigen::Matrix<Scalar, Dims, Dims> LU = Eigen::Matrix<Scalar, Dims, Dims>::Zero();
 
@@ -65,7 +89,7 @@ public:
     }
 
     template<int Dims>
-    static Eigen::Matrix<Scalar, Dims, 1>
+    inline static Eigen::Matrix<Scalar, Dims, 1>
     cholesky_solve(const Eigen::Matrix<Scalar, Dims, Dims>& LU, const Eigen::Matrix<Scalar, Dims, 1>& b) {
         Eigen::Matrix<Scalar, Dims, 1> x = Eigen::Matrix<Scalar, Dims, 1>::Zero();
         Eigen::Matrix<Scalar, Dims, 1> y = Eigen::Matrix<Scalar, Dims, 1>::Zero();
@@ -83,41 +107,16 @@ public:
 
         return x;
     }
-};
-
-#ifndef NDEBUG
-template<typename Base>
-struct CppAD::ok_if_S_same_as_T<CppAD::AD<CppAD::cg::CG<Base>>, typename CppADCodeGenTraits<Base>::Scalar> {
-    CppAD::AD<CppAD::cg::CG<Base>> value;
-};
-#endif
-
-template<typename ScalarTraits>
-struct LLT {
-    using Scalar = typename ScalarTraits::Scalar;
-
-    template<int Dims>
-    inline static Eigen::Matrix<Scalar, Dims, Dims> cholesky(const Eigen::Matrix<Scalar, Dims, Dims>& A) {
-        return A.llt().matrixL();
-    }
 
     template<int Dims>
     inline static Eigen::Matrix<Scalar, Dims, Dims> inverse(const Eigen::Matrix<Scalar, Dims, Dims>& A) {
         return A.inverse();
     }
-};
 
-template<typename T>
-struct LLT<CppADCodeGenTraits<T>> {
-    using ScalarTraits = CppADCodeGenTraits<T>;
-    using Scalar = typename ScalarTraits::Scalar;
-
-    template<int Dims>
-    inline static Eigen::Matrix<Scalar, Dims, Dims> cholesky(const Eigen::Matrix<Scalar, Dims, Dims>& A) {
-        return ScalarTraits::cholesky(A);
-    }
-
-    template<int Dims>
+    // specialized version
+    template<int Dims,
+            typename Base,
+            typename = typename std::enable_if<std::is_same_v<CppADCodeGenTraits<Base>, ScalarTraits>>::type>
     inline static Eigen::Matrix<Scalar, Dims, Dims> inverse(const Eigen::Matrix<Scalar, Dims, Dims>& A) {
         auto LU = ScalarTraits::cholesky(A);
         auto inv = Eigen::Matrix<Scalar, Dims, Dims>::Identity();

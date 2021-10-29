@@ -5,11 +5,6 @@
 #include "biped_model.h"
 
 namespace Biped {
-    namespace {
-        using rcg::ScalarTraits;
-        using Scalar = ScalarTraits::Scalar;
-    }
-
     Model::Model() :
             inverse_dynamics(inertia_properties, motion_transforms),
             jsim(inertia_properties, force_transforms) {}
@@ -33,7 +28,7 @@ namespace Biped {
         return LLT<ScalarTraits>::inverse(jsim(q));
     }
 
-    Model::AccelerationType Model::nonlinear_terms() const {
+    Model::Acceleration Model::nonlinear_terms() const {
         rcg::JointState q = state.position().joint_position();
         rcg::JointState u = state.velocity().joint_velocity();
         rcg::JointState d = rcg::JointState::Zero();
@@ -46,7 +41,7 @@ namespace Biped {
         auto r = state.position().base_rotation();
         g.tail<3>() = r.inverse() * Vector3(0, 0, -rcg::g);
 
-        AccelerationType nle;
+        Acceleration nle;
         rcg::Force f;
         rcg::JointState tau;
 

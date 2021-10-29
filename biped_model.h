@@ -16,19 +16,21 @@
 #include "robot_model.h"
 
 namespace Biped {
-    class Model : public rbd::ModelBase<
+    class Model : public ::ModelBase<
             Model,
-            rcg::ScalarTraits::Scalar,
+            rcg::ScalarTraits,
             rcg::JointSpaceDimension,
             rcg::JointSpaceDimension,
             2> {
     public:
+        using Base = decltype(base_type())::type;
+
         Model();
 
         ContactVector end_effector_positions() const override;
 
         Inertia inverse_inertia_matrix() const override;
-        AccelerationType nonlinear_terms() const override;
+        Acceleration nonlinear_terms() const override;
         ContactJacobian contact_jacobian() const override;
 
     private:

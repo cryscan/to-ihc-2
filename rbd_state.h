@@ -30,16 +30,12 @@ const auto& (name)() const {             \
 
 namespace rbd {
     template<typename Scalar, int JointSpaceDims>
-    struct Position : public Eigen::Matrix<Scalar, 7 + JointSpaceDims, 1> {
+    struct Position : public Eigen::Matrix<Scalar, 7 + JointSpaceDims, 1, Eigen::DontAlign> {
         static constexpr int joint_space_dims = JointSpaceDims;
         static constexpr int position_dims = 7 + JointSpaceDims;
         static constexpr int velocity_dims = 6 + JointSpaceDims;
 
-        using Base = Eigen::Matrix<Scalar, position_dims, 1>;
-
-        struct Velocity : public Eigen::Matrix<Scalar, velocity_dims, 1> {
-            using Base = Eigen::Matrix<Scalar, velocity_dims, 1>;
-
+        struct Velocity : public Eigen::Matrix<Scalar, velocity_dims, 1, Eigen::DontAlign> {
             Velocity() { this->setZero(); }
 
             SEGMENT(base_spatial, 6, 0)
@@ -96,8 +92,6 @@ namespace rbd {
         static constexpr int joint_space_dims = JointSpaceDims;
         static constexpr int position_dims = PositionType::position_dims;
         static constexpr int velocity_dims = PositionType::velocity_dims;
-
-        using Base = Eigen::Matrix<Scalar, position_dims + velocity_dims, 1>;
 
         State() {
             position() = PositionType();
