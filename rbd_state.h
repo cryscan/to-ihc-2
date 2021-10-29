@@ -47,9 +47,8 @@ namespace rbd {
             SEGMENT(base_linear, 3, 3)
             SEGMENT(joint_velocity, joint_space_dims, 6)
 
-            auto base_angle_axis() const {
-                auto angular = base_angular();
-                return Eigen::AngleAxis<Scalar>(angular.norm(), angular.normalized());
+            inline auto base_lie() const {
+                return Eigen::AngleAxis<Scalar>(base_angular().norm(), base_angular().normalized());
             }
         };
 
@@ -60,11 +59,14 @@ namespace rbd {
         }
 
         auto& operator+=(const Velocity& velocity) {
-            this->template tail<3 + joint_space_dims>() += velocity.template tail<3 + joint_space_dims>();
+            joint_position() += velocity.joint_velocity();
 
+            // velocity expressed in body frame
             auto rotation = base_rotation();
-            rotation = velocity.base_angle_axis() * rotation;
-            this->template head<4>() << rotation.normalized().coeffs();
+            base_position() += rotation * velocity.base_linear();
+
+            rotation = (rotation * velocity.base_lie()).normalized();
+            this->template head<4>() = rotation.coeffs();
 
             return *this;
         }

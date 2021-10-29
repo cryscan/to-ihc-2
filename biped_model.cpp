@@ -38,19 +38,21 @@ namespace Biped {
         rcg::JointState u = state.velocity().joint_velocity();
         rcg::JointState d = rcg::JointState::Zero();
 
+        // base velocity and gravity should be measured in base frame
         rcg::Velocity v = state.velocity().base_spatial();
         rcg::Acceleration a = rcg::Acceleration::Zero();
 
         rcg::Acceleration g = rcg::Acceleration::Zero();
-        g(5) = -rcg::g;
+        auto r = state.position().base_rotation();
+        g.tail<3>() = r.inverse() * Vector3(0, 0, -rcg::g);
 
         AccelerationType nle;
         rcg::Force f;
         rcg::JointState tau;
 
         inverse_dynamics.id_fully_actuated(f, tau, g, v, a, q, u, d);
-
         nle << f, tau;
+
         return nle;
     }
 
@@ -59,29 +61,26 @@ namespace Biped {
 
         ContactJacobian jacobian = ContactJacobian::Zero();
         auto q = state.position().joint_position();
-        auto r = Eigen::Transform<Scalar, 3, Eigen::Isometry>(state.position().base_rotation());
 
         {
             auto t = Eigen::Transform<Scalar, 3, Eigen::Affine>(homogeneous_transforms.fr_trunk_X_L_foot(q));
-            Vector3 p = r * t.translation();
-            Matrix3 px = cross_product(p);
+            Vector3 p = t.translation();
 
             JacobianJoint jacobian_joint = JacobianJoint::Zero();
-            jacobian_joint.middleCols<3>(0) = r * jacobians.fr_trunk_J_L_foot(q).bottomRows<3>();
+            jacobian_joint.middleCols<3>(0) = jacobians.fr_trunk_J_L_foot(q).bottomRows<3>();
 
-            Matrix3 jacobian_base_angular = -px;
+            Matrix3 jacobian_base_angular = -cross_product(p);
             Matrix3 jacobian_base_linear = Matrix3::Identity();
             jacobian.middleRows<3>(0) << jacobian_base_angular, jacobian_base_linear, jacobian_joint;
         }
         {
             auto t = Eigen::Transform<Scalar, 3, Eigen::Affine>(homogeneous_transforms.fr_trunk_X_R_foot(q));
-            Vector3 p = r * t.translation();
-            Matrix3 px = cross_product(p);
+            Vector3 p = t.translation();
 
             JacobianJoint jacobian_joint = JacobianJoint::Zero();
-            jacobian_joint.middleCols<3>(3) = r * jacobians.fr_trunk_J_R_foot(q).bottomRows<3>();
+            jacobian_joint.middleCols<3>(3) = jacobians.fr_trunk_J_R_foot(q).bottomRows<3>();
 
-            Matrix3 jacobian_base_angular = -px;
+            Matrix3 jacobian_base_angular = -cross_product(p);
             Matrix3 jacobian_base_linear = Matrix3::Identity();
             jacobian.middleRows<3>(3) << jacobian_base_angular, jacobian_base_linear, jacobian_joint;
         }
