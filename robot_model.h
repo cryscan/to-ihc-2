@@ -56,11 +56,43 @@ public:
 
     virtual ContactVector end_effector_positions() const = 0;
 
+    virtual Inertia inertia_matrix() const = 0;
     virtual Inertia inverse_inertia_matrix() const = 0;
     virtual Acceleration nonlinear_terms() const = 0;
     virtual ContactJacobian contact_jacobian() const = 0;
 
-    virtual std::tuple<Velocity, Acceleration> contact() const = 0;
+    inline std::tuple<Velocity, Acceleration> contact() const {
+        Velocity m_h, m_Jt_p;
+        ContactJacobianTranspose m_Jt;
+        ContactJacobian J = contact_jacobian();
+
+        auto q = state.position().joint_position();
+        auto u = state.velocity().vector();
+
+        {
+            ContactJacobianTranspose Jt = J.transpose();
+            auto h = nonlinear_terms();
+
+            auto LU = LLT<ScalarTraits>::cholesky(inertia_matrix());
+            m_h << LLT<ScalarTraits>::cholesky_solve(LU, h);
+            m_Jt << LLT<ScalarTraits>::cholesky_solve(LU, Jt);
+        }
+
+        ContactInertia G = J * m_Jt;
+        ContactVector c = J * u + J * m_h * dt;
+
+        Eigen::DenseIndex it = 0;
+        for (int i = 0; i < num_contacts; ++i) {
+            Vector3 complement = Vector3::Ones() * 0.1 * ScalarTraits::exp(8 * ScalarTraits::tanh(20 * d(i)));
+            SEGMENT3(G.diagonal(), it) += complement;
+            it += 3;
+        }
+
+        auto p = solve_percussion(G, c);
+        m_Jt_p << m_Jt * p;
+
+        return {m_h, m_Jt_p};
+    }
 
     State state;
     Control control;

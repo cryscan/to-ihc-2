@@ -31,11 +31,10 @@ namespace Biped {
 
         ContactVector end_effector_positions() const override;
 
+        Inertia inertia_matrix() const override;
         Inertia inverse_inertia_matrix() const override;
         Acceleration nonlinear_terms() const override;
         ContactJacobian contact_jacobian() const override;
-
-        std::tuple<Velocity, Acceleration> contact() const override;
 
     private:
         // kinematics

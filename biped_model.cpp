@@ -23,6 +23,11 @@ namespace Biped {
         return percussion;
     }
 
+    Model::Inertia Model::inertia_matrix() const {
+        auto q = state.position().joint_position();
+        return jsim(q).base();
+    }
+
     Model::Inertia Model::inverse_inertia_matrix() const {
         auto q = state.position().joint_position();
         return LLT<ScalarTraits>::inverse(jsim(q));
@@ -94,39 +99,5 @@ namespace Biped {
         px(2, 0) = -p.y();
         px(2, 1) = p.x();
         return px;
-    }
-
-    std::tuple<Model::Velocity, Model::Acceleration> Model::contact() const {
-        Velocity m_h;
-        ContactJacobianTranspose m_Jt;
-        ContactJacobian J = contact_jacobian();
-
-        auto q = state.position().joint_position();
-        auto u = state.velocity().vector();
-
-        {
-            ContactJacobianTranspose Jt = J.transpose();
-            auto h = nonlinear_terms();
-
-            auto LU = LLT<ScalarTraits>::cholesky(jsim(q));
-            m_h << LLT<ScalarTraits>::cholesky_solve(LU, h);
-            m_Jt << LLT<ScalarTraits>::cholesky_solve(LU, Jt);
-        }
-
-        ContactInertia G = J * m_Jt;
-        ContactVector c = J * u + J * m_h * dt;
-
-        Eigen::DenseIndex it = 0;
-        for (int i = 0; i < num_contacts; ++i) {
-            G.diagonal().segment<3>(it) += Vector3::Ones() * 0.1 * ScalarTraits::exp(8 * ScalarTraits::tanh(20 * d(i)));
-            it += 3;
-        }
-
-        auto p = solve_percussion(G, c);
-
-        Velocity m_Jt_p;
-        m_Jt_p << m_Jt * p;
-
-        return {m_h, m_Jt_p};
     }
 }
