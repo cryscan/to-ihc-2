@@ -26,6 +26,8 @@ int main() {
      */
 
     auto biped_model = new Biped::Model;
+
+    biped_model->control.setZero();
     biped_model->state.position().base_position() << 0, 0, 1;
 
     {
@@ -33,18 +35,21 @@ int main() {
         delta(2) = M_PI_2;
         biped_model->state.position() += delta;
     }
-    {
-        Biped::Model::Velocity delta;
-        delta(1) = M_PI_2;
-        biped_model->state.position() += delta;
-    }
+//    {
+//        Biped::Model::Velocity delta;
+//        delta(1) = M_PI_2;
+//        biped_model->state.position() += delta;
+//    }
 
     auto positions = biped_model->end_effector_positions();
     std::cout << positions.transpose() << '\n' << std::endl;
 
     std::cout << biped_model->inverse_inertia_matrix() << '\n' << std::endl;
     std::cout << biped_model->nonlinear_terms().transpose() << '\n' << std::endl;
-    std::cout << biped_model->contact_jacobian();
+    std::cout << biped_model->contact_jacobian() << '\n' << std::endl;
 
-    std::cout << '\n';
+    biped_model->d << positions(2), positions(5);
+
+    auto[m_h, m_Jt_p] = biped_model->contact();
+    std::cout << m_h.transpose() << '\n' << m_Jt_p.transpose();
 }

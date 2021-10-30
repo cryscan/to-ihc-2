@@ -24,6 +24,8 @@ namespace Biped {
             2> {
     public:
         using Base = decltype(base_type())::type;
+        using Base::ScalarTraits;
+        using Base::Scalar;
 
         Model();
 
@@ -32,6 +34,8 @@ namespace Biped {
         Inertia inverse_inertia_matrix() const override;
         Acceleration nonlinear_terms() const override;
         ContactJacobian contact_jacobian() const override;
+
+        std::tuple<Velocity, Acceleration> contact() const override;
 
     private:
         // kinematics

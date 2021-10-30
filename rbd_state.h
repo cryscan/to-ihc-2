@@ -38,6 +38,7 @@ namespace rbd {
         struct Velocity : public Eigen::Matrix<Scalar, velocity_dims, 1, Eigen::DontAlign> {
             Velocity() { this->setZero(); }
 
+            SEGMENT(vector, velocity_dims, 0)
             SEGMENT(base_spatial, 6, 0)
             SEGMENT(base_angular, 3, 0)
             SEGMENT(base_linear, 3, 3)

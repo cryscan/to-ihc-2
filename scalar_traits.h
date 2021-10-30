@@ -67,9 +67,9 @@ struct LLT {
 
     // custom LU factorization
     // https://bitbucket.org/adrlab/hyq_gen_ad/src/master/include/external/iit/rbd/traits/CppADCodegenTrait.h
-    template<int Dims>
+    template<int Dims, int Options = 0>
     inline static Eigen::Matrix<Scalar, Dims, Dims>
-    cholesky(const Eigen::Matrix<Scalar, Dims, Dims>& A) {
+    cholesky(const Eigen::Matrix<Scalar, Dims, Dims, Options>& A) {
         Eigen::Matrix<Scalar, Dims, Dims> LU = Eigen::Matrix<Scalar, Dims, Dims>::Zero();
 
         for (int k = 0; k < Dims; ++k) {
@@ -88,9 +88,9 @@ struct LLT {
         return LU;
     }
 
-    template<int Dims>
+    template<int Dims, int Options = 0>
     inline static Eigen::Matrix<Scalar, Dims, 1>
-    cholesky_solve(const Eigen::Matrix<Scalar, Dims, Dims>& LU, const Eigen::Matrix<Scalar, Dims, 1>& b) {
+    cholesky_solve(const Eigen::Matrix<Scalar, Dims, Dims>& LU, const Eigen::Matrix<Scalar, Dims, 1, Options>& b) {
         Eigen::Matrix<Scalar, Dims, 1> x = Eigen::Matrix<Scalar, Dims, 1>::Zero();
         Eigen::Matrix<Scalar, Dims, 1> y = Eigen::Matrix<Scalar, Dims, 1>::Zero();
 
@@ -108,23 +108,31 @@ struct LLT {
         return x;
     }
 
-    template<int Dims>
-    inline static Eigen::Matrix<Scalar, Dims, Dims> inverse(const Eigen::Matrix<Scalar, Dims, Dims>& A) {
+    template<int Dims, int N, int Options = 0>
+    inline static Eigen::Matrix<Scalar, Dims, N>
+    cholesky_solve(const Eigen::Matrix<Scalar, Dims, Dims>& LU, const Eigen::Matrix<Scalar, Dims, N, Options>& B) {
+        Eigen::Matrix<Scalar, Dims, N> X;
+        for (int i = 0; i < N; ++i) {
+            Eigen::Matrix<Scalar, Dims, 1> col = B.col(i);
+            X.col(i) << cholesky_solve(LU, col);
+        }
+        return X;
+    }
+
+    template<int Dims, int Options = 0>
+    inline static Eigen::Matrix<Scalar, Dims, Dims> inverse(const Eigen::Matrix<Scalar, Dims, Dims, Options>& A) {
         return A.inverse();
     }
 
     // specialized version
     template<int Dims,
             typename Base,
+            int Options = 0,
             typename = typename std::enable_if<std::is_same_v<CppADCodeGenTraits<Base>, ScalarTraits>>::type>
-    inline static Eigen::Matrix<Scalar, Dims, Dims> inverse(const Eigen::Matrix<Scalar, Dims, Dims>& A) {
+    inline static Eigen::Matrix<Scalar, Dims, Dims> inverse(const Eigen::Matrix<Scalar, Dims, Dims, Options>& A) {
         auto LU = ScalarTraits::cholesky(A);
-        auto inv = Eigen::Matrix<Scalar, Dims, Dims>::Identity();
-        for (int i = 0; i < Dims; ++i) {
-            Eigen::Matrix<Scalar, Dims, 1> col = inv.col(i);
-            inv.col(i) << ScalarTraits::cholesky_solve(LU, col);
-        }
-        return inv;
+        Eigen::Matrix<Scalar, Dims, Dims> I = Eigen::Matrix<Scalar, Dims, Dims>::Identity();
+        return cholesky_solve(LU, I);
     }
 };
 

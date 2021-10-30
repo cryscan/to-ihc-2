@@ -16,10 +16,10 @@ template<typename T>
 struct Parameter {
 };
 
-template<typename Derived, typename ScalarTraits_, int InputDims, int ParamDims, int OutputDims>
+template<typename Derived, typename T, int InputDims, int ParamDims, int OutputDims>
 class ADBase {
 public:
-    using ScalarTraits = ScalarTraits_;
+    using ScalarTraits = T;
     using Scalar = typename ScalarTraits::Scalar;
 
     using Params = Parameter<Derived>;

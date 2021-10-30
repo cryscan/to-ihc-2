@@ -31,11 +31,9 @@ namespace Biped {
     Model::Acceleration Model::nonlinear_terms() const {
         rcg::JointState q = state.position().joint_position();
         rcg::JointState u = state.velocity().joint_velocity();
-        rcg::JointState d = rcg::JointState::Zero();
 
         // base velocity and gravity should be measured in base frame
         rcg::Velocity v = state.velocity().base_spatial();
-        rcg::Acceleration a = rcg::Acceleration::Zero();
 
         rcg::Acceleration g = rcg::Acceleration::Zero();
         auto r = state.position().base_rotation();
@@ -45,10 +43,14 @@ namespace Biped {
         rcg::Force f;
         rcg::JointState tau;
 
-        inverse_dynamics.id_fully_actuated(f, tau, g, v, a, q, u, d);
+        inverse_dynamics.id_fully_actuated(f, tau, g, v, rcg::Acceleration::Zero(), q, u, rcg::JointState::Zero());
         nle << f, tau;
 
-        return nle;
+        Acceleration h;
+        h << -nle;
+        h.joint_velocity() << control;
+
+        return h;
     }
 
     Model::ContactJacobian Model::contact_jacobian() const {
@@ -92,5 +94,39 @@ namespace Biped {
         px(2, 0) = -p.y();
         px(2, 1) = p.x();
         return px;
+    }
+
+    std::tuple<Model::Velocity, Model::Acceleration> Model::contact() const {
+        Velocity m_h;
+        ContactJacobianTranspose m_Jt;
+        ContactJacobian J = contact_jacobian();
+
+        auto q = state.position().joint_position();
+        auto u = state.velocity().vector();
+
+        {
+            ContactJacobianTranspose Jt = J.transpose();
+            auto h = nonlinear_terms();
+
+            auto LU = LLT<ScalarTraits>::cholesky(jsim(q));
+            m_h << LLT<ScalarTraits>::cholesky_solve(LU, h);
+            m_Jt << LLT<ScalarTraits>::cholesky_solve(LU, Jt);
+        }
+
+        ContactInertia G = J * m_Jt;
+        ContactVector c = J * u + J * m_h * dt;
+
+        Eigen::DenseIndex it = 0;
+        for (int i = 0; i < num_contacts; ++i) {
+            G.diagonal().segment<3>(it) += Vector3::Ones() * 0.1 * ScalarTraits::exp(8 * ScalarTraits::tanh(20 * d(i)));
+            it += 3;
+        }
+
+        auto p = solve_percussion(G, c);
+
+        Velocity m_Jt_p;
+        m_Jt_p << m_Jt * p;
+
+        return {m_h, m_Jt_p};
     }
 }
