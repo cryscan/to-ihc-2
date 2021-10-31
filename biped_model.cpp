@@ -15,11 +15,20 @@ namespace Biped {
         auto q = state.position().joint_position();
         auto base_pose = state.position().base_pose();
 
-        Vector3 left = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_L_foot(q)).translation();
-        Vector3 right = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_R_foot(q)).translation();
+        // Vector3 trunk = state.position().base_position();
+        Vector3 body = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_body(q)).translation();
+
+        Vector3 L_thigh = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_fr_L_thigh(q)).translation();
+        Vector3 R_thigh = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_fr_R_thigh(q)).translation();
+
+        Vector3 L_shin = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_fr_L_shin(q)).translation();
+        Vector3 R_shin = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_fr_R_shin(q)).translation();
+
+        Vector3 L_foot = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_L_foot(q)).translation();
+        Vector3 R_foot = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_R_foot(q)).translation();
 
         ContactVector percussion;
-        percussion << left, right;
+        percussion << body, L_thigh, R_thigh, L_shin, R_shin, L_foot, R_foot;
         return percussion;
     }
 
@@ -60,10 +69,69 @@ namespace Biped {
     Model::ContactJacobian Model::contact_jacobian() const {
         using JacobianJoint = Eigen::Matrix<Scalar, 3, joint_state_dims>;
 
-        ContactJacobian jacobian = ContactJacobian::Zero();
         auto q = state.position().joint_position();
+        ContactJacobian jacobian = ContactJacobian::Zero();
+        Matrix3 jacobian_base_linear = Matrix3::Identity();
 
         {
+            // body
+            auto t = Eigen::Transform<Scalar, 3, Eigen::Affine>(homogeneous_transforms.fr_trunk_X_body(q));
+            Vector3 p = t.translation();
+
+            JacobianJoint jacobian_joint = JacobianJoint::Zero();
+
+            Matrix3 jacobian_base_angular = -cross_product(p);
+            jacobian.middleRows<3>(BODY * 3) << jacobian_base_angular, jacobian_base_linear, jacobian_joint;
+        }
+
+        {
+            // left thigh
+            auto t = Eigen::Transform<Scalar, 3, Eigen::Affine>(homogeneous_transforms.fr_trunk_X_fr_L_thigh(q));
+            Vector3 p = t.translation();
+
+            JacobianJoint jacobian_joint = JacobianJoint::Zero();
+            jacobian_joint.middleCols<2>(0) = jacobians.fr_trunk_J_fr_L_thigh(q).bottomRows<3>();
+
+            Matrix3 jacobian_base_angular = -cross_product(p);
+            jacobian.middleRows<3>(L_THIGH * 3) << jacobian_base_angular, jacobian_base_linear, jacobian_joint;
+        }
+        {
+            // right thigh
+            auto t = Eigen::Transform<Scalar, 3, Eigen::Affine>(homogeneous_transforms.fr_trunk_X_fr_R_thigh(q));
+            Vector3 p = t.translation();
+
+            JacobianJoint jacobian_joint = JacobianJoint::Zero();
+            jacobian_joint.middleCols<2>(3) = jacobians.fr_trunk_J_fr_R_thigh(q).bottomRows<3>();
+
+            Matrix3 jacobian_base_angular = -cross_product(p);
+            jacobian.middleRows<3>(R_THIGH * 3) << jacobian_base_angular, jacobian_base_linear, jacobian_joint;
+        }
+
+        {
+            // left shin
+            auto t = Eigen::Transform<Scalar, 3, Eigen::Affine>(homogeneous_transforms.fr_trunk_X_fr_L_shin(q));
+            Vector3 p = t.translation();
+
+            JacobianJoint jacobian_joint = JacobianJoint::Zero();
+            jacobian_joint.middleCols<3>(0) = jacobians.fr_trunk_J_fr_L_shin(q).bottomRows<3>();
+
+            Matrix3 jacobian_base_angular = -cross_product(p);
+            jacobian.middleRows<3>(L_SHIN * 3) << jacobian_base_angular, jacobian_base_linear, jacobian_joint;
+        }
+        {
+            // right shin
+            auto t = Eigen::Transform<Scalar, 3, Eigen::Affine>(homogeneous_transforms.fr_trunk_X_fr_R_shin(q));
+            Vector3 p = t.translation();
+
+            JacobianJoint jacobian_joint = JacobianJoint::Zero();
+            jacobian_joint.middleCols<3>(3) = jacobians.fr_trunk_J_fr_R_shin(q).bottomRows<3>();
+
+            Matrix3 jacobian_base_angular = -cross_product(p);
+            jacobian.middleRows<3>(R_SHIN * 3) << jacobian_base_angular, jacobian_base_linear, jacobian_joint;
+        }
+
+        {
+            // left foot
             auto t = Eigen::Transform<Scalar, 3, Eigen::Affine>(homogeneous_transforms.fr_trunk_X_L_foot(q));
             Vector3 p = t.translation();
 
@@ -71,10 +139,10 @@ namespace Biped {
             jacobian_joint.middleCols<3>(0) = jacobians.fr_trunk_J_L_foot(q).bottomRows<3>();
 
             Matrix3 jacobian_base_angular = -cross_product(p);
-            Matrix3 jacobian_base_linear = Matrix3::Identity();
-            jacobian.middleRows<3>(0) << jacobian_base_angular, jacobian_base_linear, jacobian_joint;
+            jacobian.middleRows<3>(L_FOOT * 3) << jacobian_base_angular, jacobian_base_linear, jacobian_joint;
         }
         {
+            // right foot
             auto t = Eigen::Transform<Scalar, 3, Eigen::Affine>(homogeneous_transforms.fr_trunk_X_R_foot(q));
             Vector3 p = t.translation();
 
@@ -82,8 +150,7 @@ namespace Biped {
             jacobian_joint.middleCols<3>(3) = jacobians.fr_trunk_J_R_foot(q).bottomRows<3>();
 
             Matrix3 jacobian_base_angular = -cross_product(p);
-            Matrix3 jacobian_base_linear = Matrix3::Identity();
-            jacobian.middleRows<3>(3) << jacobian_base_angular, jacobian_base_linear, jacobian_joint;
+            jacobian.middleRows<3>(R_FOOT * 3) << jacobian_base_angular, jacobian_base_linear, jacobian_joint;
         }
 
         return jacobian;

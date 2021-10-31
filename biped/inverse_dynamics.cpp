@@ -160,22 +160,22 @@ void Biped::rcg::InverseDynamics::id(
     trunk_a = -trunk_Ic.inverse() * trunk_f;
 
     L_hip_a = xm->fr_L_hip_X_fr_trunk * trunk_a;
-    jForces(L_HAA) = ((Scalar) (L_hip_Ic.row(iit::rbd::AZ) * L_hip_a) + L_hip_f(iit::rbd::AZ));
+    jForces(L_HAA) = (L_hip_Ic.row(iit::rbd::AZ) * L_hip_a + L_hip_f(iit::rbd::AZ));
 
     L_thigh_a = xm->fr_L_thigh_X_fr_L_hip * L_hip_a;
-    jForces(L_HFE) = ((Scalar) (L_thigh_Ic.row(iit::rbd::AZ) * L_thigh_a) + L_thigh_f(iit::rbd::AZ));
+    jForces(L_HFE) = (L_thigh_Ic.row(iit::rbd::AZ) * L_thigh_a + L_thigh_f(iit::rbd::AZ));
 
     L_shin_a = xm->fr_L_shin_X_fr_L_thigh * L_thigh_a;
-    jForces(L_KFE) = ((Scalar) (L_shin_Ic.row(iit::rbd::AZ) * L_shin_a) + L_shin_f(iit::rbd::AZ));
+    jForces(L_KFE) = (L_shin_Ic.row(iit::rbd::AZ) * L_shin_a + L_shin_f(iit::rbd::AZ));
 
     R_hip_a = xm->fr_R_hip_X_fr_trunk * trunk_a;
-    jForces(R_HAA) = ((Scalar) (R_hip_Ic.row(iit::rbd::AZ) * R_hip_a) + R_hip_f(iit::rbd::AZ));
+    jForces(R_HAA) = (R_hip_Ic.row(iit::rbd::AZ) * R_hip_a + R_hip_f(iit::rbd::AZ));
 
     R_thigh_a = xm->fr_R_thigh_X_fr_R_hip * R_hip_a;
-    jForces(R_HFE) = ((Scalar) (R_thigh_Ic.row(iit::rbd::AZ) * R_thigh_a) + R_thigh_f(iit::rbd::AZ));
+    jForces(R_HFE) = (R_thigh_Ic.row(iit::rbd::AZ) * R_thigh_a + R_thigh_f(iit::rbd::AZ));
 
     R_shin_a = xm->fr_R_shin_X_fr_R_thigh * R_thigh_a;
-    jForces(R_KFE) = ((Scalar) (R_shin_Ic.row(iit::rbd::AZ) * R_shin_a) + R_shin_f(iit::rbd::AZ));
+    jForces(R_KFE) = (R_shin_Ic.row(iit::rbd::AZ) * R_shin_a + R_shin_f(iit::rbd::AZ));
 
 
     trunk_a += g;

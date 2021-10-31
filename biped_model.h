@@ -21,11 +21,15 @@ namespace Biped {
             rcg::ScalarTraits,
             rcg::JointSpaceDimension,
             rcg::JointSpaceDimension,
-            2> {
+            7> {
     public:
         using Base = decltype(base_type())::type;
         using Base::ScalarTraits;
         using Base::Scalar;
+
+        enum EE {
+            BODY, L_THIGH, R_THIGH, L_SHIN, R_SHIN, L_FOOT, R_FOOT
+        };
 
         Model();
 

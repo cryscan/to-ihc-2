@@ -47,9 +47,14 @@ namespace Biped {
 
             typedef TransformMotion<Dummy>::MatrixType MatrixType;
 
-            struct Type_fr_trunk_X_L_foot : public TransformMotion<Type_fr_trunk_X_L_foot> {
-                Type_fr_trunk_X_L_foot();
-                const Type_fr_trunk_X_L_foot& update(const state_t&);
+            struct Type_fr_trunk_X_body : public TransformMotion<Type_fr_trunk_X_body> {
+                Type_fr_trunk_X_body();
+                const Type_fr_trunk_X_body& update(const state_t&);
+            };
+
+            struct Type_fr_trunk_X_fr_L_hip : public TransformMotion<Type_fr_trunk_X_fr_L_hip> {
+                Type_fr_trunk_X_fr_L_hip();
+                const Type_fr_trunk_X_fr_L_hip& update(const state_t&);
             };
 
             struct Type_fr_trunk_X_fr_L_HAA : public TransformMotion<Type_fr_trunk_X_fr_L_HAA> {
@@ -57,19 +62,9 @@ namespace Biped {
                 const Type_fr_trunk_X_fr_L_HAA& update(const state_t&);
             };
 
-            struct Type_fr_trunk_X_fr_L_HFE : public TransformMotion<Type_fr_trunk_X_fr_L_HFE> {
-                Type_fr_trunk_X_fr_L_HFE();
-                const Type_fr_trunk_X_fr_L_HFE& update(const state_t&);
-            };
-
-            struct Type_fr_trunk_X_fr_L_KFE : public TransformMotion<Type_fr_trunk_X_fr_L_KFE> {
-                Type_fr_trunk_X_fr_L_KFE();
-                const Type_fr_trunk_X_fr_L_KFE& update(const state_t&);
-            };
-
-            struct Type_fr_trunk_X_R_foot : public TransformMotion<Type_fr_trunk_X_R_foot> {
-                Type_fr_trunk_X_R_foot();
-                const Type_fr_trunk_X_R_foot& update(const state_t&);
+            struct Type_fr_trunk_X_fr_R_hip : public TransformMotion<Type_fr_trunk_X_fr_R_hip> {
+                Type_fr_trunk_X_fr_R_hip();
+                const Type_fr_trunk_X_fr_R_hip& update(const state_t&);
             };
 
             struct Type_fr_trunk_X_fr_R_HAA : public TransformMotion<Type_fr_trunk_X_fr_R_HAA> {
@@ -77,9 +72,39 @@ namespace Biped {
                 const Type_fr_trunk_X_fr_R_HAA& update(const state_t&);
             };
 
+            struct Type_fr_trunk_X_fr_L_thigh : public TransformMotion<Type_fr_trunk_X_fr_L_thigh> {
+                Type_fr_trunk_X_fr_L_thigh();
+                const Type_fr_trunk_X_fr_L_thigh& update(const state_t&);
+            };
+
+            struct Type_fr_trunk_X_fr_L_HFE : public TransformMotion<Type_fr_trunk_X_fr_L_HFE> {
+                Type_fr_trunk_X_fr_L_HFE();
+                const Type_fr_trunk_X_fr_L_HFE& update(const state_t&);
+            };
+
+            struct Type_fr_trunk_X_fr_R_thigh : public TransformMotion<Type_fr_trunk_X_fr_R_thigh> {
+                Type_fr_trunk_X_fr_R_thigh();
+                const Type_fr_trunk_X_fr_R_thigh& update(const state_t&);
+            };
+
             struct Type_fr_trunk_X_fr_R_HFE : public TransformMotion<Type_fr_trunk_X_fr_R_HFE> {
                 Type_fr_trunk_X_fr_R_HFE();
                 const Type_fr_trunk_X_fr_R_HFE& update(const state_t&);
+            };
+
+            struct Type_fr_trunk_X_fr_L_shin : public TransformMotion<Type_fr_trunk_X_fr_L_shin> {
+                Type_fr_trunk_X_fr_L_shin();
+                const Type_fr_trunk_X_fr_L_shin& update(const state_t&);
+            };
+
+            struct Type_fr_trunk_X_fr_L_KFE : public TransformMotion<Type_fr_trunk_X_fr_L_KFE> {
+                Type_fr_trunk_X_fr_L_KFE();
+                const Type_fr_trunk_X_fr_L_KFE& update(const state_t&);
+            };
+
+            struct Type_fr_trunk_X_fr_R_shin : public TransformMotion<Type_fr_trunk_X_fr_R_shin> {
+                Type_fr_trunk_X_fr_R_shin();
+                const Type_fr_trunk_X_fr_R_shin& update(const state_t&);
             };
 
             struct Type_fr_trunk_X_fr_R_KFE : public TransformMotion<Type_fr_trunk_X_fr_R_KFE> {
@@ -87,14 +112,19 @@ namespace Biped {
                 const Type_fr_trunk_X_fr_R_KFE& update(const state_t&);
             };
 
+            struct Type_fr_trunk_X_L_foot : public TransformMotion<Type_fr_trunk_X_L_foot> {
+                Type_fr_trunk_X_L_foot();
+                const Type_fr_trunk_X_L_foot& update(const state_t&);
+            };
+
+            struct Type_fr_trunk_X_R_foot : public TransformMotion<Type_fr_trunk_X_R_foot> {
+                Type_fr_trunk_X_R_foot();
+                const Type_fr_trunk_X_R_foot& update(const state_t&);
+            };
+
             struct Type_fr_L_hip_X_fr_trunk : public TransformMotion<Type_fr_L_hip_X_fr_trunk> {
                 Type_fr_L_hip_X_fr_trunk();
                 const Type_fr_L_hip_X_fr_trunk& update(const state_t&);
-            };
-
-            struct Type_fr_trunk_X_fr_L_hip : public TransformMotion<Type_fr_trunk_X_fr_L_hip> {
-                Type_fr_trunk_X_fr_L_hip();
-                const Type_fr_trunk_X_fr_L_hip& update(const state_t&);
             };
 
             struct Type_fr_L_thigh_X_fr_L_hip : public TransformMotion<Type_fr_L_thigh_X_fr_L_hip> {
@@ -122,11 +152,6 @@ namespace Biped {
                 const Type_fr_R_hip_X_fr_trunk& update(const state_t&);
             };
 
-            struct Type_fr_trunk_X_fr_R_hip : public TransformMotion<Type_fr_trunk_X_fr_R_hip> {
-                Type_fr_trunk_X_fr_R_hip();
-                const Type_fr_trunk_X_fr_R_hip& update(const state_t&);
-            };
-
             struct Type_fr_R_thigh_X_fr_R_hip : public TransformMotion<Type_fr_R_thigh_X_fr_R_hip> {
                 Type_fr_R_thigh_X_fr_R_hip();
                 const Type_fr_R_thigh_X_fr_R_hip& update(const state_t&);
@@ -151,22 +176,27 @@ namespace Biped {
             MotionTransforms();
             void updateParams(const Params_lengths&, const Params_angles&);
 
-            Type_fr_trunk_X_L_foot fr_trunk_X_L_foot;
-            Type_fr_trunk_X_fr_L_HAA fr_trunk_X_fr_L_HAA;
-            Type_fr_trunk_X_fr_L_HFE fr_trunk_X_fr_L_HFE;
-            Type_fr_trunk_X_fr_L_KFE fr_trunk_X_fr_L_KFE;
-            Type_fr_trunk_X_R_foot fr_trunk_X_R_foot;
-            Type_fr_trunk_X_fr_R_HAA fr_trunk_X_fr_R_HAA;
-            Type_fr_trunk_X_fr_R_HFE fr_trunk_X_fr_R_HFE;
-            Type_fr_trunk_X_fr_R_KFE fr_trunk_X_fr_R_KFE;
-            Type_fr_L_hip_X_fr_trunk fr_L_hip_X_fr_trunk;
+            Type_fr_trunk_X_body fr_trunk_X_body;
             Type_fr_trunk_X_fr_L_hip fr_trunk_X_fr_L_hip;
+            Type_fr_trunk_X_fr_L_HAA fr_trunk_X_fr_L_HAA;
+            Type_fr_trunk_X_fr_R_hip fr_trunk_X_fr_R_hip;
+            Type_fr_trunk_X_fr_R_HAA fr_trunk_X_fr_R_HAA;
+            Type_fr_trunk_X_fr_L_thigh fr_trunk_X_fr_L_thigh;
+            Type_fr_trunk_X_fr_L_HFE fr_trunk_X_fr_L_HFE;
+            Type_fr_trunk_X_fr_R_thigh fr_trunk_X_fr_R_thigh;
+            Type_fr_trunk_X_fr_R_HFE fr_trunk_X_fr_R_HFE;
+            Type_fr_trunk_X_fr_L_shin fr_trunk_X_fr_L_shin;
+            Type_fr_trunk_X_fr_L_KFE fr_trunk_X_fr_L_KFE;
+            Type_fr_trunk_X_fr_R_shin fr_trunk_X_fr_R_shin;
+            Type_fr_trunk_X_fr_R_KFE fr_trunk_X_fr_R_KFE;
+            Type_fr_trunk_X_L_foot fr_trunk_X_L_foot;
+            Type_fr_trunk_X_R_foot fr_trunk_X_R_foot;
+            Type_fr_L_hip_X_fr_trunk fr_L_hip_X_fr_trunk;
             Type_fr_L_thigh_X_fr_L_hip fr_L_thigh_X_fr_L_hip;
             Type_fr_L_hip_X_fr_L_thigh fr_L_hip_X_fr_L_thigh;
             Type_fr_L_shin_X_fr_L_thigh fr_L_shin_X_fr_L_thigh;
             Type_fr_L_thigh_X_fr_L_shin fr_L_thigh_X_fr_L_shin;
             Type_fr_R_hip_X_fr_trunk fr_R_hip_X_fr_trunk;
-            Type_fr_trunk_X_fr_R_hip fr_trunk_X_fr_R_hip;
             Type_fr_R_thigh_X_fr_R_hip fr_R_thigh_X_fr_R_hip;
             Type_fr_R_hip_X_fr_R_thigh fr_R_hip_X_fr_R_thigh;
             Type_fr_R_shin_X_fr_R_thigh fr_R_shin_X_fr_R_thigh;
@@ -188,9 +218,14 @@ namespace Biped {
 
             typedef TransformForce<Dummy>::MatrixType MatrixType;
 
-            struct Type_fr_trunk_X_L_foot : public TransformForce<Type_fr_trunk_X_L_foot> {
-                Type_fr_trunk_X_L_foot();
-                const Type_fr_trunk_X_L_foot& update(const state_t&);
+            struct Type_fr_trunk_X_body : public TransformForce<Type_fr_trunk_X_body> {
+                Type_fr_trunk_X_body();
+                const Type_fr_trunk_X_body& update(const state_t&);
+            };
+
+            struct Type_fr_trunk_X_fr_L_hip : public TransformForce<Type_fr_trunk_X_fr_L_hip> {
+                Type_fr_trunk_X_fr_L_hip();
+                const Type_fr_trunk_X_fr_L_hip& update(const state_t&);
             };
 
             struct Type_fr_trunk_X_fr_L_HAA : public TransformForce<Type_fr_trunk_X_fr_L_HAA> {
@@ -198,19 +233,9 @@ namespace Biped {
                 const Type_fr_trunk_X_fr_L_HAA& update(const state_t&);
             };
 
-            struct Type_fr_trunk_X_fr_L_HFE : public TransformForce<Type_fr_trunk_X_fr_L_HFE> {
-                Type_fr_trunk_X_fr_L_HFE();
-                const Type_fr_trunk_X_fr_L_HFE& update(const state_t&);
-            };
-
-            struct Type_fr_trunk_X_fr_L_KFE : public TransformForce<Type_fr_trunk_X_fr_L_KFE> {
-                Type_fr_trunk_X_fr_L_KFE();
-                const Type_fr_trunk_X_fr_L_KFE& update(const state_t&);
-            };
-
-            struct Type_fr_trunk_X_R_foot : public TransformForce<Type_fr_trunk_X_R_foot> {
-                Type_fr_trunk_X_R_foot();
-                const Type_fr_trunk_X_R_foot& update(const state_t&);
+            struct Type_fr_trunk_X_fr_R_hip : public TransformForce<Type_fr_trunk_X_fr_R_hip> {
+                Type_fr_trunk_X_fr_R_hip();
+                const Type_fr_trunk_X_fr_R_hip& update(const state_t&);
             };
 
             struct Type_fr_trunk_X_fr_R_HAA : public TransformForce<Type_fr_trunk_X_fr_R_HAA> {
@@ -218,9 +243,39 @@ namespace Biped {
                 const Type_fr_trunk_X_fr_R_HAA& update(const state_t&);
             };
 
+            struct Type_fr_trunk_X_fr_L_thigh : public TransformForce<Type_fr_trunk_X_fr_L_thigh> {
+                Type_fr_trunk_X_fr_L_thigh();
+                const Type_fr_trunk_X_fr_L_thigh& update(const state_t&);
+            };
+
+            struct Type_fr_trunk_X_fr_L_HFE : public TransformForce<Type_fr_trunk_X_fr_L_HFE> {
+                Type_fr_trunk_X_fr_L_HFE();
+                const Type_fr_trunk_X_fr_L_HFE& update(const state_t&);
+            };
+
+            struct Type_fr_trunk_X_fr_R_thigh : public TransformForce<Type_fr_trunk_X_fr_R_thigh> {
+                Type_fr_trunk_X_fr_R_thigh();
+                const Type_fr_trunk_X_fr_R_thigh& update(const state_t&);
+            };
+
             struct Type_fr_trunk_X_fr_R_HFE : public TransformForce<Type_fr_trunk_X_fr_R_HFE> {
                 Type_fr_trunk_X_fr_R_HFE();
                 const Type_fr_trunk_X_fr_R_HFE& update(const state_t&);
+            };
+
+            struct Type_fr_trunk_X_fr_L_shin : public TransformForce<Type_fr_trunk_X_fr_L_shin> {
+                Type_fr_trunk_X_fr_L_shin();
+                const Type_fr_trunk_X_fr_L_shin& update(const state_t&);
+            };
+
+            struct Type_fr_trunk_X_fr_L_KFE : public TransformForce<Type_fr_trunk_X_fr_L_KFE> {
+                Type_fr_trunk_X_fr_L_KFE();
+                const Type_fr_trunk_X_fr_L_KFE& update(const state_t&);
+            };
+
+            struct Type_fr_trunk_X_fr_R_shin : public TransformForce<Type_fr_trunk_X_fr_R_shin> {
+                Type_fr_trunk_X_fr_R_shin();
+                const Type_fr_trunk_X_fr_R_shin& update(const state_t&);
             };
 
             struct Type_fr_trunk_X_fr_R_KFE : public TransformForce<Type_fr_trunk_X_fr_R_KFE> {
@@ -228,14 +283,19 @@ namespace Biped {
                 const Type_fr_trunk_X_fr_R_KFE& update(const state_t&);
             };
 
+            struct Type_fr_trunk_X_L_foot : public TransformForce<Type_fr_trunk_X_L_foot> {
+                Type_fr_trunk_X_L_foot();
+                const Type_fr_trunk_X_L_foot& update(const state_t&);
+            };
+
+            struct Type_fr_trunk_X_R_foot : public TransformForce<Type_fr_trunk_X_R_foot> {
+                Type_fr_trunk_X_R_foot();
+                const Type_fr_trunk_X_R_foot& update(const state_t&);
+            };
+
             struct Type_fr_L_hip_X_fr_trunk : public TransformForce<Type_fr_L_hip_X_fr_trunk> {
                 Type_fr_L_hip_X_fr_trunk();
                 const Type_fr_L_hip_X_fr_trunk& update(const state_t&);
-            };
-
-            struct Type_fr_trunk_X_fr_L_hip : public TransformForce<Type_fr_trunk_X_fr_L_hip> {
-                Type_fr_trunk_X_fr_L_hip();
-                const Type_fr_trunk_X_fr_L_hip& update(const state_t&);
             };
 
             struct Type_fr_L_thigh_X_fr_L_hip : public TransformForce<Type_fr_L_thigh_X_fr_L_hip> {
@@ -263,11 +323,6 @@ namespace Biped {
                 const Type_fr_R_hip_X_fr_trunk& update(const state_t&);
             };
 
-            struct Type_fr_trunk_X_fr_R_hip : public TransformForce<Type_fr_trunk_X_fr_R_hip> {
-                Type_fr_trunk_X_fr_R_hip();
-                const Type_fr_trunk_X_fr_R_hip& update(const state_t&);
-            };
-
             struct Type_fr_R_thigh_X_fr_R_hip : public TransformForce<Type_fr_R_thigh_X_fr_R_hip> {
                 Type_fr_R_thigh_X_fr_R_hip();
                 const Type_fr_R_thigh_X_fr_R_hip& update(const state_t&);
@@ -292,22 +347,27 @@ namespace Biped {
             ForceTransforms();
             void updateParams(const Params_lengths&, const Params_angles&);
 
-            Type_fr_trunk_X_L_foot fr_trunk_X_L_foot;
-            Type_fr_trunk_X_fr_L_HAA fr_trunk_X_fr_L_HAA;
-            Type_fr_trunk_X_fr_L_HFE fr_trunk_X_fr_L_HFE;
-            Type_fr_trunk_X_fr_L_KFE fr_trunk_X_fr_L_KFE;
-            Type_fr_trunk_X_R_foot fr_trunk_X_R_foot;
-            Type_fr_trunk_X_fr_R_HAA fr_trunk_X_fr_R_HAA;
-            Type_fr_trunk_X_fr_R_HFE fr_trunk_X_fr_R_HFE;
-            Type_fr_trunk_X_fr_R_KFE fr_trunk_X_fr_R_KFE;
-            Type_fr_L_hip_X_fr_trunk fr_L_hip_X_fr_trunk;
+            Type_fr_trunk_X_body fr_trunk_X_body;
             Type_fr_trunk_X_fr_L_hip fr_trunk_X_fr_L_hip;
+            Type_fr_trunk_X_fr_L_HAA fr_trunk_X_fr_L_HAA;
+            Type_fr_trunk_X_fr_R_hip fr_trunk_X_fr_R_hip;
+            Type_fr_trunk_X_fr_R_HAA fr_trunk_X_fr_R_HAA;
+            Type_fr_trunk_X_fr_L_thigh fr_trunk_X_fr_L_thigh;
+            Type_fr_trunk_X_fr_L_HFE fr_trunk_X_fr_L_HFE;
+            Type_fr_trunk_X_fr_R_thigh fr_trunk_X_fr_R_thigh;
+            Type_fr_trunk_X_fr_R_HFE fr_trunk_X_fr_R_HFE;
+            Type_fr_trunk_X_fr_L_shin fr_trunk_X_fr_L_shin;
+            Type_fr_trunk_X_fr_L_KFE fr_trunk_X_fr_L_KFE;
+            Type_fr_trunk_X_fr_R_shin fr_trunk_X_fr_R_shin;
+            Type_fr_trunk_X_fr_R_KFE fr_trunk_X_fr_R_KFE;
+            Type_fr_trunk_X_L_foot fr_trunk_X_L_foot;
+            Type_fr_trunk_X_R_foot fr_trunk_X_R_foot;
+            Type_fr_L_hip_X_fr_trunk fr_L_hip_X_fr_trunk;
             Type_fr_L_thigh_X_fr_L_hip fr_L_thigh_X_fr_L_hip;
             Type_fr_L_hip_X_fr_L_thigh fr_L_hip_X_fr_L_thigh;
             Type_fr_L_shin_X_fr_L_thigh fr_L_shin_X_fr_L_thigh;
             Type_fr_L_thigh_X_fr_L_shin fr_L_thigh_X_fr_L_shin;
             Type_fr_R_hip_X_fr_trunk fr_R_hip_X_fr_trunk;
-            Type_fr_trunk_X_fr_R_hip fr_trunk_X_fr_R_hip;
             Type_fr_R_thigh_X_fr_R_hip fr_R_thigh_X_fr_R_hip;
             Type_fr_R_hip_X_fr_R_thigh fr_R_hip_X_fr_R_thigh;
             Type_fr_R_shin_X_fr_R_thigh fr_R_shin_X_fr_R_thigh;
@@ -329,9 +389,14 @@ namespace Biped {
 
             typedef TransformHomogeneous<Dummy>::MatrixType MatrixType;
 
-            struct Type_fr_trunk_X_L_foot : public TransformHomogeneous<Type_fr_trunk_X_L_foot> {
-                Type_fr_trunk_X_L_foot();
-                const Type_fr_trunk_X_L_foot& update(const state_t&);
+            struct Type_fr_trunk_X_body : public TransformHomogeneous<Type_fr_trunk_X_body> {
+                Type_fr_trunk_X_body();
+                const Type_fr_trunk_X_body& update(const state_t&);
+            };
+
+            struct Type_fr_trunk_X_fr_L_hip : public TransformHomogeneous<Type_fr_trunk_X_fr_L_hip> {
+                Type_fr_trunk_X_fr_L_hip();
+                const Type_fr_trunk_X_fr_L_hip& update(const state_t&);
             };
 
             struct Type_fr_trunk_X_fr_L_HAA : public TransformHomogeneous<Type_fr_trunk_X_fr_L_HAA> {
@@ -339,19 +404,9 @@ namespace Biped {
                 const Type_fr_trunk_X_fr_L_HAA& update(const state_t&);
             };
 
-            struct Type_fr_trunk_X_fr_L_HFE : public TransformHomogeneous<Type_fr_trunk_X_fr_L_HFE> {
-                Type_fr_trunk_X_fr_L_HFE();
-                const Type_fr_trunk_X_fr_L_HFE& update(const state_t&);
-            };
-
-            struct Type_fr_trunk_X_fr_L_KFE : public TransformHomogeneous<Type_fr_trunk_X_fr_L_KFE> {
-                Type_fr_trunk_X_fr_L_KFE();
-                const Type_fr_trunk_X_fr_L_KFE& update(const state_t&);
-            };
-
-            struct Type_fr_trunk_X_R_foot : public TransformHomogeneous<Type_fr_trunk_X_R_foot> {
-                Type_fr_trunk_X_R_foot();
-                const Type_fr_trunk_X_R_foot& update(const state_t&);
+            struct Type_fr_trunk_X_fr_R_hip : public TransformHomogeneous<Type_fr_trunk_X_fr_R_hip> {
+                Type_fr_trunk_X_fr_R_hip();
+                const Type_fr_trunk_X_fr_R_hip& update(const state_t&);
             };
 
             struct Type_fr_trunk_X_fr_R_HAA : public TransformHomogeneous<Type_fr_trunk_X_fr_R_HAA> {
@@ -359,9 +414,39 @@ namespace Biped {
                 const Type_fr_trunk_X_fr_R_HAA& update(const state_t&);
             };
 
+            struct Type_fr_trunk_X_fr_L_thigh : public TransformHomogeneous<Type_fr_trunk_X_fr_L_thigh> {
+                Type_fr_trunk_X_fr_L_thigh();
+                const Type_fr_trunk_X_fr_L_thigh& update(const state_t&);
+            };
+
+            struct Type_fr_trunk_X_fr_L_HFE : public TransformHomogeneous<Type_fr_trunk_X_fr_L_HFE> {
+                Type_fr_trunk_X_fr_L_HFE();
+                const Type_fr_trunk_X_fr_L_HFE& update(const state_t&);
+            };
+
+            struct Type_fr_trunk_X_fr_R_thigh : public TransformHomogeneous<Type_fr_trunk_X_fr_R_thigh> {
+                Type_fr_trunk_X_fr_R_thigh();
+                const Type_fr_trunk_X_fr_R_thigh& update(const state_t&);
+            };
+
             struct Type_fr_trunk_X_fr_R_HFE : public TransformHomogeneous<Type_fr_trunk_X_fr_R_HFE> {
                 Type_fr_trunk_X_fr_R_HFE();
                 const Type_fr_trunk_X_fr_R_HFE& update(const state_t&);
+            };
+
+            struct Type_fr_trunk_X_fr_L_shin : public TransformHomogeneous<Type_fr_trunk_X_fr_L_shin> {
+                Type_fr_trunk_X_fr_L_shin();
+                const Type_fr_trunk_X_fr_L_shin& update(const state_t&);
+            };
+
+            struct Type_fr_trunk_X_fr_L_KFE : public TransformHomogeneous<Type_fr_trunk_X_fr_L_KFE> {
+                Type_fr_trunk_X_fr_L_KFE();
+                const Type_fr_trunk_X_fr_L_KFE& update(const state_t&);
+            };
+
+            struct Type_fr_trunk_X_fr_R_shin : public TransformHomogeneous<Type_fr_trunk_X_fr_R_shin> {
+                Type_fr_trunk_X_fr_R_shin();
+                const Type_fr_trunk_X_fr_R_shin& update(const state_t&);
             };
 
             struct Type_fr_trunk_X_fr_R_KFE : public TransformHomogeneous<Type_fr_trunk_X_fr_R_KFE> {
@@ -369,14 +454,19 @@ namespace Biped {
                 const Type_fr_trunk_X_fr_R_KFE& update(const state_t&);
             };
 
+            struct Type_fr_trunk_X_L_foot : public TransformHomogeneous<Type_fr_trunk_X_L_foot> {
+                Type_fr_trunk_X_L_foot();
+                const Type_fr_trunk_X_L_foot& update(const state_t&);
+            };
+
+            struct Type_fr_trunk_X_R_foot : public TransformHomogeneous<Type_fr_trunk_X_R_foot> {
+                Type_fr_trunk_X_R_foot();
+                const Type_fr_trunk_X_R_foot& update(const state_t&);
+            };
+
             struct Type_fr_L_hip_X_fr_trunk : public TransformHomogeneous<Type_fr_L_hip_X_fr_trunk> {
                 Type_fr_L_hip_X_fr_trunk();
                 const Type_fr_L_hip_X_fr_trunk& update(const state_t&);
-            };
-
-            struct Type_fr_trunk_X_fr_L_hip : public TransformHomogeneous<Type_fr_trunk_X_fr_L_hip> {
-                Type_fr_trunk_X_fr_L_hip();
-                const Type_fr_trunk_X_fr_L_hip& update(const state_t&);
             };
 
             struct Type_fr_L_thigh_X_fr_L_hip : public TransformHomogeneous<Type_fr_L_thigh_X_fr_L_hip> {
@@ -404,11 +494,6 @@ namespace Biped {
                 const Type_fr_R_hip_X_fr_trunk& update(const state_t&);
             };
 
-            struct Type_fr_trunk_X_fr_R_hip : public TransformHomogeneous<Type_fr_trunk_X_fr_R_hip> {
-                Type_fr_trunk_X_fr_R_hip();
-                const Type_fr_trunk_X_fr_R_hip& update(const state_t&);
-            };
-
             struct Type_fr_R_thigh_X_fr_R_hip : public TransformHomogeneous<Type_fr_R_thigh_X_fr_R_hip> {
                 Type_fr_R_thigh_X_fr_R_hip();
                 const Type_fr_R_thigh_X_fr_R_hip& update(const state_t&);
@@ -433,22 +518,27 @@ namespace Biped {
             HomogeneousTransforms();
             void updateParams(const Params_lengths&, const Params_angles&);
 
-            Type_fr_trunk_X_L_foot fr_trunk_X_L_foot;
-            Type_fr_trunk_X_fr_L_HAA fr_trunk_X_fr_L_HAA;
-            Type_fr_trunk_X_fr_L_HFE fr_trunk_X_fr_L_HFE;
-            Type_fr_trunk_X_fr_L_KFE fr_trunk_X_fr_L_KFE;
-            Type_fr_trunk_X_R_foot fr_trunk_X_R_foot;
-            Type_fr_trunk_X_fr_R_HAA fr_trunk_X_fr_R_HAA;
-            Type_fr_trunk_X_fr_R_HFE fr_trunk_X_fr_R_HFE;
-            Type_fr_trunk_X_fr_R_KFE fr_trunk_X_fr_R_KFE;
-            Type_fr_L_hip_X_fr_trunk fr_L_hip_X_fr_trunk;
+            Type_fr_trunk_X_body fr_trunk_X_body;
             Type_fr_trunk_X_fr_L_hip fr_trunk_X_fr_L_hip;
+            Type_fr_trunk_X_fr_L_HAA fr_trunk_X_fr_L_HAA;
+            Type_fr_trunk_X_fr_R_hip fr_trunk_X_fr_R_hip;
+            Type_fr_trunk_X_fr_R_HAA fr_trunk_X_fr_R_HAA;
+            Type_fr_trunk_X_fr_L_thigh fr_trunk_X_fr_L_thigh;
+            Type_fr_trunk_X_fr_L_HFE fr_trunk_X_fr_L_HFE;
+            Type_fr_trunk_X_fr_R_thigh fr_trunk_X_fr_R_thigh;
+            Type_fr_trunk_X_fr_R_HFE fr_trunk_X_fr_R_HFE;
+            Type_fr_trunk_X_fr_L_shin fr_trunk_X_fr_L_shin;
+            Type_fr_trunk_X_fr_L_KFE fr_trunk_X_fr_L_KFE;
+            Type_fr_trunk_X_fr_R_shin fr_trunk_X_fr_R_shin;
+            Type_fr_trunk_X_fr_R_KFE fr_trunk_X_fr_R_KFE;
+            Type_fr_trunk_X_L_foot fr_trunk_X_L_foot;
+            Type_fr_trunk_X_R_foot fr_trunk_X_R_foot;
+            Type_fr_L_hip_X_fr_trunk fr_L_hip_X_fr_trunk;
             Type_fr_L_thigh_X_fr_L_hip fr_L_thigh_X_fr_L_hip;
             Type_fr_L_hip_X_fr_L_thigh fr_L_hip_X_fr_L_thigh;
             Type_fr_L_shin_X_fr_L_thigh fr_L_shin_X_fr_L_thigh;
             Type_fr_L_thigh_X_fr_L_shin fr_L_thigh_X_fr_L_shin;
             Type_fr_R_hip_X_fr_trunk fr_R_hip_X_fr_trunk;
-            Type_fr_trunk_X_fr_R_hip fr_trunk_X_fr_R_hip;
             Type_fr_R_thigh_X_fr_R_hip fr_R_thigh_X_fr_R_hip;
             Type_fr_R_hip_X_fr_R_thigh fr_R_hip_X_fr_R_thigh;
             Type_fr_R_shin_X_fr_R_thigh fr_R_shin_X_fr_R_thigh;

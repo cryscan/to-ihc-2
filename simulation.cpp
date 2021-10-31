@@ -20,8 +20,8 @@ void step(ModelBase<Derived>& model) {
     auto u = model.state.velocity();
     auto dt = model.dt;
 
-    auto feet = model.end_effector_positions();
-    model.d << feet(2), feet(5);
+    auto e = model.end_effector_positions();
+    model.d << e(2), e(5), e(8), e(11), e(14), e(17), e(20);
 
     model.state.position() = q + u * dt / 2;
     auto[m_h, m_Jt_p] = model.contact();

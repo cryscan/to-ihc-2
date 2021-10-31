@@ -38,7 +38,7 @@ public:
     static constexpr int contact_dims = 3 * num_contacts;
 
     static constexpr
-    std::remove_reference<ModelBase<Derived, T, joint_state_dims, contact_dims, num_contacts>>
+    std::remove_reference<ModelBase<Derived, T, joint_state_dims, control_dims, num_contacts>>
     base_type() {};
 
     using Control = Eigen::Matrix<Scalar, control_dims, 1>;
@@ -86,6 +86,9 @@ public:
         for (int i = 0; i < num_contacts; ++i) {
             Vector3 complement = Vector3::Ones() * 0.1 * ScalarTraits::exp(8 * ScalarTraits::tanh(20 * d(i)));
             SEGMENT3(G.diagonal(), it) += complement;
+
+            // Vector3 drift = Vector3::Ones() * d(i) / dt;
+            // SEGMENT3(c, it) += drift;
 
             it += 3;
         }
