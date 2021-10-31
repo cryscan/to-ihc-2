@@ -36,7 +36,11 @@ namespace rbd {
         static constexpr int velocity_dims = 6 + JointSpaceDims;
 
         struct Velocity : public Eigen::Matrix<Scalar, velocity_dims, 1, Eigen::DontAlign> {
+            using Base = Eigen::Matrix<Scalar, velocity_dims, 1, Eigen::DontAlign>;
             Velocity() { this->setZero(); }
+
+            template<typename T>
+            Velocity(const T& t) : Base(t) {}
 
             SEGMENT(vector, velocity_dims, 0)
             SEGMENT(base_spatial, 6, 0)
@@ -49,11 +53,16 @@ namespace rbd {
             }
         };
 
+        using Base = Eigen::Matrix<Scalar, 7 + JointSpaceDims, 1, Eigen::DontAlign>;
+
         Position() {
             base_rotation().setIdentity();
             base_position().setZero();
             joint_position().setZero();
         }
+
+        template<typename T>
+        Position(const T& t) : Base(t) {}
 
         auto& operator+=(const Velocity& velocity) {
             joint_position() += velocity.joint_velocity();

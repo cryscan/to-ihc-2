@@ -51,8 +51,7 @@ namespace Biped {
         inverse_dynamics.id_fully_actuated(f, tau, g, v, rcg::Acceleration::Zero(), q, u, rcg::JointState::Zero());
         nle << f, tau;
 
-        Acceleration h;
-        h << -nle;
+        Acceleration h = -nle;
         h.joint_velocity() << control;
 
         return h;

@@ -14,6 +14,23 @@
 
 using Biped::rcg::ScalarTraits;
 
+template<typename Derived>
+void step(ModelBase<Derived>& model) {
+    auto q = model.state.position();
+    auto u = model.state.velocity();
+    auto dt = model.dt;
+
+    auto feet = model.end_effector_positions();
+    model.d << feet(2), feet(5);
+
+    model.state.position() = q + u * dt / 2;
+    auto[m_h, m_Jt_p] = model.contact();
+
+    decltype(u) ue = u + m_h * dt + m_Jt_p;
+    model.state.velocity() = ue;
+    model.state.position() += (u + ue) * dt / 2;
+}
+
 int main() {
     /*
     rbd::State<double, 6> state;
@@ -25,31 +42,17 @@ int main() {
     std::cout << state.transpose() << std::endl;
      */
 
-    auto biped_model = new Biped::Model;
+    auto model = std::make_unique<Biped::Model>();
 
-    biped_model->control.setZero();
-    biped_model->state.position().base_position() << 0, 0, 1;
+    model->control.setZero();
+    model->state.position().base_position() << 0, 0, 0.7;
+    model->state.position().joint_position() << 0, M_PI_4, -M_PI_2, 0, M_PI_4, -M_PI_2;
 
-    {
-        Biped::Model::Velocity delta;
-        delta(2) = M_PI_2;
-        biped_model->state.position() += delta;
+    std::ofstream os("out.txt");
+    os << model->state.transpose() << '\n';
+
+    for (int i = 0; i < 200; ++i) {
+        step(*model);
+        os << model->state.transpose() << '\n';
     }
-//    {
-//        Biped::Model::Velocity delta;
-//        delta(1) = M_PI_2;
-//        biped_model->state.position() += delta;
-//    }
-
-    auto positions = biped_model->end_effector_positions();
-    std::cout << positions.transpose() << '\n' << std::endl;
-
-    std::cout << biped_model->inverse_inertia_matrix() << '\n' << std::endl;
-    std::cout << biped_model->nonlinear_terms().transpose() << '\n' << std::endl;
-    std::cout << biped_model->contact_jacobian() << '\n' << std::endl;
-
-    biped_model->d << positions(2), positions(5);
-
-    auto[m_h, m_Jt_p] = biped_model->contact();
-    std::cout << m_h.transpose() << '\n' << m_Jt_p.transpose();
 }

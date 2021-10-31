@@ -49,6 +49,7 @@ public:
     using ContactJacobianTranspose = Eigen::Matrix<Scalar, velocity_dims, contact_dims>;
     using ContactInertia = Eigen::Matrix<Scalar, contact_dims, contact_dims>;
     using ContactVector = Eigen::Matrix<Scalar, contact_dims, 1>;
+    using ContactDistance = Eigen::Matrix<Scalar, num_contacts, 1>;
 
     using Matrix3 = Eigen::Matrix<Scalar, 3, 3>;
     using Vector3 = Eigen::Matrix<Scalar, 3, 1>;
@@ -61,7 +62,7 @@ public:
     virtual Acceleration nonlinear_terms() const = 0;
     virtual ContactJacobian contact_jacobian() const = 0;
 
-    inline std::tuple<Velocity, Acceleration> contact() const {
+    inline std::tuple<Acceleration, Velocity> contact() const {
         Velocity m_h, m_Jt_p;
         ContactJacobianTranspose m_Jt;
         ContactJacobian J = contact_jacobian();
@@ -74,8 +75,8 @@ public:
             auto h = nonlinear_terms();
 
             auto LU = LLT<ScalarTraits>::cholesky(inertia_matrix());
-            m_h << LLT<ScalarTraits>::cholesky_solve(LU, h);
-            m_Jt << LLT<ScalarTraits>::cholesky_solve(LU, Jt);
+            m_h = LLT<ScalarTraits>::cholesky_solve(LU, h);
+            m_Jt = LLT<ScalarTraits>::cholesky_solve(LU, Jt);
         }
 
         ContactInertia G = J * m_Jt;
@@ -85,23 +86,24 @@ public:
         for (int i = 0; i < num_contacts; ++i) {
             Vector3 complement = Vector3::Ones() * 0.1 * ScalarTraits::exp(8 * ScalarTraits::tanh(20 * d(i)));
             SEGMENT3(G.diagonal(), it) += complement;
+
             it += 3;
         }
 
         auto p = solve_percussion(G, c);
-        m_Jt_p << m_Jt * p;
+        m_Jt_p = m_Jt * p;
 
         return {m_h, m_Jt_p};
     }
 
+    const int num_iters = 100;
+    const Scalar dt = 0.01;
+
     State state;
     Control control;
 
-    int num_iters = 100;
-    Scalar dt = 0.01;
-
     Scalar mu = 1;
-    Eigen::Matrix<Scalar, num_contacts, 1> d;
+    ContactDistance d;
 
 protected:
     inline ContactVector
