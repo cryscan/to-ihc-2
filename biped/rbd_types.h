@@ -9,8 +9,8 @@
 namespace Biped {
     namespace rcg {
 
-        // typedef CppADCodeGenTraits<double> ScalarTraits;
-        typedef typename iit::rbd::DoubleTraits ScalarTraits;
+        typedef CppADCodeGenTraits<double> ScalarTraits;
+        // typedef typename iit::rbd::DoubleTraits ScalarTraits;
         typedef typename ScalarTraits::Scalar Scalar;
 
         typedef iit::rbd::Core<Scalar> TypesGen;

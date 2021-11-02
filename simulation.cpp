@@ -8,27 +8,25 @@
 #include <fstream>
 
 #include "biped/rbd_types.h"
+
 #include "rbd_state.h"
 #include "robot_model.h"
 #include "biped_model.h"
 
+#include "kinematics.h"
+#include "dynamics.h"
+
 using Biped::rcg::ScalarTraits;
 
-template<typename Derived>
-void step(ModelBase<Derived>& model) {
-    auto q = model.state.position();
-    auto u = model.state.velocity();
-    auto dt = model.dt;
+template<typename Scalar>
+void set_init_position(rbd::Position<Scalar, Biped::rcg::JointSpaceDimension>& position) {
+    typename rbd::Position<Scalar, Biped::rcg::JointSpaceDimension>::Velocity delta;
+    delta.base_angular() << 0, M_PI_2, 0;
 
-    auto e = model.end_effector_positions();
-    model.d << e(2), e(5), e(8), e(11), e(14), e(17), e(20);
+    position.base_position() << 0, 0, 0.7;
+    position += delta;
 
-    model.state.position() = q + u * dt / 2;
-    auto[m_h, m_Jt_p] = model.contact();
-
-    decltype(u) ue = u + m_h * dt + m_Jt_p;
-    model.state.velocity() = ue;
-    model.state.position() += (u + ue) * dt / 2;
+    position.joint_position() << 0, M_PI_4, -M_PI_2, 0, M_PI_4, -M_PI_2;
 }
 
 int main() {
@@ -42,17 +40,34 @@ int main() {
     std::cout << state.transpose() << std::endl;
      */
 
-    auto model = std::make_unique<Biped::Model>();
+    auto model = std::make_shared<Biped::Model>();
 
-    model->control.setZero();
-    model->state.position().base_position() << 0, 0, 0.7;
-    model->state.position().joint_position() << 0, M_PI_4, -M_PI_2, 0, M_PI_4, -M_PI_2;
+    Kinematics<Biped::Model> kinematics("kinematics", model);
+    kinematics.build_map();
+
+    Dynamics<Biped::Model> dynamics("dynamics", model);
+    dynamics.build_map();
+
+    set_init_position(dynamics.params.x.position());
+    dynamics.params.x.velocity().base_angular() << M_PI_2, 0, 0;
+    dynamics.params.x.velocity().base_linear() << 0, 0, 0;
+    dynamics.params.x.velocity().joint_velocity() << 0, 0, M_PI_2, 0, 0, M_PI_2;
+    dynamics.params.u.setZero();
 
     std::ofstream os("out.txt");
-    os << model->state.transpose() << '\n';
+    os << dynamics.params.x.transpose() << '\n';
 
-    for (int i = 0; i < 200; ++i) {
-        step(*model);
-        os << model->state.transpose() << '\n';
+    for (int i = 0; i < 2000; ++i) {
+        kinematics.params.q << dynamics.params.x.position();
+        kinematics.evaluate();
+
+        for (int j = 0, k = 2; j < Biped::Model::num_contacts; ++j, k += 3)
+            dynamics.params.d(j) = kinematics.f(k);
+
+        dynamics.evaluate();
+
+        dynamics.params.x << dynamics.f;
+
+        os << dynamics.f.transpose() << '\n';
     }
 }

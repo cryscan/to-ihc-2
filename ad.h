@@ -5,48 +5,137 @@
 #ifndef TO_IHC_2_AD_H
 #define TO_IHC_2_AD_H
 
+#include <memory>
 #include <cppad/cg.hpp>
 
-enum class EvalOption {
-    ZERO_ORDER,
-    FIRST_ORDER,
-};
+#include "biped/rbd_types.h"
 
-template<typename T>
+#define ASSIGN_SEGMENT(to, from, it, size) (to) << (from).template segment<(size)>(it); (it) += (size);
+#define FILL_SEGMENT(to, from, it, size) (to).template segment<(size)>(it) << (from); (it) += (size);
+
+template<typename T, typename ValueType>
 struct Parameter {
 };
 
-template<typename Derived, typename T, int InputDims, int ParamDims, int OutputDims>
+template<typename Derived, int InputDims, int ParamDims, int OutputDims, typename ValueType>
 class ADBase {
 public:
-    using ScalarTraits = T;
-    using Scalar = typename ScalarTraits::Scalar;
+    enum EvalOption {
+        ZERO_ORDER,
+        FIRST_ORDER,
+    };
 
-    using Params = Parameter<Derived>;
+    using Params = Parameter<Derived, ValueType>;
 
     static constexpr int input_dims = InputDims;
     static constexpr int param_dims = ParamDims;
     static constexpr int output_dims = OutputDims;
 
-    using CG = CppAD::cg::CG<typename ScalarTraits::ValueType>;
+    using CG = CppAD::cg::CG<ValueType>;
     using AD = CppAD::AD<CG>;
 
-    using ScalarVector = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
     using ADVector = Eigen::Matrix<AD, Eigen::Dynamic, 1>;
+    using ADFun = CppAD::ADFun<CG>;
 
-    CppAD::ADFun<CG> ad_fun[2];
+    explicit ADBase(const std::string& name) :
+            name(name),
+            jacobian_name(name + "_jacobian"),
+            library_name(name + CppAD::cg::system::SystemInfo<>::DYNAMIC_LIB_EXTENSION),
+            ad_x(input_dims + param_dims) {}
 
-    std::unique_ptr<CppAD::cg::DynamicLib<double>> lib;
-    std::unique_ptr<CppAD::cg::GenericModel<double>> models[2];
+    ADBase(const ADBase& other) :
+            name(other.name),
+            jacobian_name(other.jacobian_name),
+            library_name(other.library_name),
+            ad_x(other.ad_x) {}
 
     Params params;
+
+    inline void build_map() {
+        build_zero();
+        // if constexpr(input_dims != 0) build_jacobian();
+
+        using namespace CppAD::cg;
+        if (!system::isFile(library_name)) {
+            std::cout << "Compiling " << library_name << std::endl;
+            compile_library();
+        } else {
+            std::cout << "Loading " << library_name << std::endl;
+            load_library();
+        }
+    }
+
+    inline void evaluate(EvalOption option = FIRST_ORDER) {
+        Eigen::Matrix<ValueType, Eigen::Dynamic, 1> x(input_dims + param_dims);
+        params.template fill(x);
+        f << models[0]->ForwardZero(x);
+
+        if (option == FIRST_ORDER) {
+            using ValueVector = Eigen::Matrix<ValueType, Eigen::Dynamic, 1>;
+            // Eigen::Map<ValueVector>(df.data(), df.size()) << models[1]->ForwardZero(x);
+        }
+    }
+
+    Eigen::Matrix<ValueType, output_dims, 1> f;
+    Eigen::Matrix<ValueType, output_dims, input_dims, Eigen::RowMajor> df;
 
 protected:
     const std::string name;
     const std::string jacobian_name;
     const std::string library_name;
 
+    ADVector ad_x;
+    ADFun ad_fun[2];
 
+    std::unique_ptr<CppAD::cg::DynamicLib<ValueType>> lib;
+    std::unique_ptr<CppAD::cg::GenericModel<ValueType>> models[2];
+
+    virtual void build_zero() = 0;
+
+    inline void build_jacobian() {
+        using FullJacobian = Eigen::Matrix<AD, output_dims, input_dims + param_dims, Eigen::RowMajor>;
+        using Jacobian = Eigen::Matrix<AD, output_dims, input_dims, Eigen::RowMajor>;
+
+        ADVector ad_y(output_dims * input_dims);
+        CppAD::Independent(ad_x);
+
+        FullJacobian full_jacobian;
+        Eigen::Map<ADVector>(full_jacobian.data(), full_jacobian.size()) << ad_fun[0].base2ad().template Jacobian(ad_x);
+
+        Jacobian jacobian = full_jacobian.template leftCols<input_dims>();
+        ad_y << Eigen::Map<ADVector>(jacobian.data(), jacobian.size());
+
+        ad_fun[1].template Dependent(ad_y);
+        ad_fun[1].optimize("no_compare_op");
+    }
+
+    void compile_library() {
+        using namespace CppAD::cg;
+
+        ModelCSourceGen<ValueType> c_source_gen[2] = {{ad_fun[0], name},
+                                                      {ad_fun[1], jacobian_name}};
+
+        ModelLibraryCSourceGen<ValueType> library_c_source_gen(c_source_gen[0]);
+        // if constexpr (input_dims != 0) library_c_source_gen.addModel(c_source_gen[1]);
+
+        DynamicModelLibraryProcessor<ValueType> processor(library_c_source_gen, name);
+        GccCompiler<ValueType> compiler;
+
+        SaveFilesModelLibraryProcessor<ValueType> save_files(library_c_source_gen);
+        save_files.saveSources();
+
+        lib = processor.createDynamicLibrary(compiler);
+
+        models[0] = lib->model(name);
+        // if constexpr (input_dims != 0) models[1] = lib->model(jacobian_name);
+    }
+
+    void load_library() {
+        using namespace CppAD::cg;
+        lib = std::make_unique<LinuxDynamicLib<ValueType>>(library_name);
+        models[0] = lib->model(name);
+        // if constexpr (input_dims != 0) models[1] = lib->model(jacobian_name);
+    }
 };
 
 #endif //TO_IHC_2_AD_H

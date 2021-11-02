@@ -9,6 +9,7 @@
 #include <algorithm>
 
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <cppad/cg.hpp>
 
 template<typename Base>
@@ -18,9 +19,11 @@ struct CppADCodeGenTraits {
 
     struct Scalar : public AD {
         Scalar() = default;
-        Scalar(const AD& ad) : AD(ad) {}
-        Scalar(const CG& cg) : AD(cg) {}
-        Scalar(const Base& b) : AD(b) {}
+
+        template<typename T, typename = std::enable_if_t<std::is_convertible_v<T, AD>>>
+        Scalar(const T& t) : AD(t) {}
+
+        Scalar(const Base& base) : AD(base) {}
     };
 
     using ValueType = Base;
@@ -40,20 +43,6 @@ struct CppADCodeGenTraits {
     }
 };
 
-namespace std {
-    template<typename Base>
-    const typename CppADCodeGenTraits<Base>::Scalar& min(typename CppADCodeGenTraits<Base>::Scalar& a,
-                                                         typename CppADCodeGenTraits<Base>::Scalar& b) {
-        return CppAD::CondExpLt(a, b, a, b);
-    }
-
-    template<typename Base>
-    const typename CppADCodeGenTraits<Base>::Scalar& max(const typename CppADCodeGenTraits<Base>::Scalar& a,
-                                                         const typename CppADCodeGenTraits<Base>::Scalar& b) {
-        return CppAD::CondExpGt(a, b, a, b);
-    }
-}
-
 #ifndef NDEBUG
 template<typename Base>
 struct CppAD::ok_if_S_same_as_T<CppAD::AD<CppAD::cg::CG<Base>>, typename CppADCodeGenTraits<Base>::Scalar> {
@@ -61,10 +50,8 @@ struct CppAD::ok_if_S_same_as_T<CppAD::AD<CppAD::cg::CG<Base>>, typename CppADCo
 };
 #endif
 
-template<typename ScalarTraits>
-struct LLT {
-    using Scalar = typename ScalarTraits::Scalar;
-
+template<typename Scalar>
+struct Traits {
     // custom LU factorization
     // https://bitbucket.org/adrlab/hyq_gen_ad/src/master/include/external/iit/rbd/traits/CppADCodegenTrait.h
     template<int Dims, int Options = 0>
@@ -124,15 +111,21 @@ struct LLT {
         return A.inverse();
     }
 
-    // specialized version
-    template<int Dims,
-            typename Base,
-            int Options = 0,
-            typename = typename std::enable_if<std::is_same_v<CppADCodeGenTraits<Base>, ScalarTraits>>::type>
-    inline static Eigen::Matrix<Scalar, Dims, Dims> inverse(const Eigen::Matrix<Scalar, Dims, Dims, Options>& A) {
-        auto LU = ScalarTraits::cholesky(A);
-        Eigen::Matrix<Scalar, Dims, Dims> I = Eigen::Matrix<Scalar, Dims, Dims>::Identity();
-        return cholesky_solve(LU, I);
+    inline static Eigen::Quaternion<Scalar> inverse(const Eigen::Quaternion<Scalar>& r) {
+        if constexpr (std::is_same_v<Scalar, typename CppADCodeGenTraits<double>::Scalar>) {
+            Scalar n2 = r.squaredNorm();
+            n2 = CppAD::CondExpGt(n2, Scalar(0), n2, Scalar(1));
+            return Eigen::Quaternion<Scalar>(r.conjugate().coeffs() / n2);
+        } else return r.inverse();
+    }
+
+    template<int N>
+    inline static Eigen::Matrix<Scalar, N, 1> normalize(const Eigen::Matrix<Scalar, N, 1>& vector) {
+        if constexpr (std::is_same_v<Scalar, typename CppADCodeGenTraits<double>::Scalar>) {
+            Scalar z = vector.norm();
+            z = CppAD::CondExpGt(z, Scalar(0), z, Scalar(1));
+            return vector / z;
+        } else return vector.normalized();
     }
 };
 

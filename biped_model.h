@@ -23,7 +23,7 @@ namespace Biped {
             rcg::JointSpaceDimension,
             7> {
     public:
-        using Base = decltype(base_type())::type;
+        using Base = ModelBase;
         using Base::ScalarTraits;
         using Base::Scalar;
 
@@ -31,7 +31,7 @@ namespace Biped {
             BODY, L_THIGH, R_THIGH, L_SHIN, R_SHIN, L_FOOT, R_FOOT
         };
 
-        Model();
+        explicit Model(int num_iters = 100);
 
         ContactVector end_effector_positions() const override;
 

@@ -10,6 +10,19 @@
 
 #include "rbd_state.h"
 
+namespace std {
+    template<typename Base>
+    using ADScalar = typename CppADCodeGenTraits<Base>::Scalar;
+
+    inline ADScalar<double> min(const ADScalar<double>& a, const ADScalar<double>& b) {
+        return CppAD::CondExpLt(a, b, a, b);
+    }
+
+    inline ADScalar<double> max(const ADScalar<double>& a, const ADScalar<double>& b) {
+        return CppAD::CondExpGt(a, b, a, b);
+    }
+}
+
 #define SEGMENT3(x, i) ((x).template segment<3>(i))
 
 template<typename Derived,
@@ -37,10 +50,6 @@ public:
     static constexpr int num_contacts = NumContacts;
     static constexpr int contact_dims = 3 * num_contacts;
 
-    static constexpr
-    std::remove_reference<ModelBase<Derived, T, joint_state_dims, control_dims, num_contacts>>
-    base_type() {};
-
     using Control = Eigen::Matrix<Scalar, control_dims, 1>;
     using JointState = Eigen::Matrix<Scalar, joint_state_dims, 1>;
 
@@ -55,6 +64,8 @@ public:
     using Vector3 = Eigen::Matrix<Scalar, 3, 1>;
     using Quaternion = Eigen::Quaternion<Scalar>;
 
+    explicit ModelBase(int num_iters) : num_iters(num_iters) {}
+
     virtual ContactVector end_effector_positions() const = 0;
 
     virtual Inertia inertia_matrix() const = 0;
@@ -68,29 +79,23 @@ public:
         ContactJacobian J = contact_jacobian();
 
         auto q = state.position().joint_position();
-        auto u = state.velocity().vector();
+        auto u = state.velocity().base();
 
         {
             ContactJacobianTranspose Jt = J.transpose();
             auto h = nonlinear_terms();
 
-            auto LU = LLT<ScalarTraits>::cholesky(inertia_matrix());
-            m_h = LLT<ScalarTraits>::cholesky_solve(LU, h);
-            m_Jt = LLT<ScalarTraits>::cholesky_solve(LU, Jt);
+            auto LU = Traits<Scalar>::cholesky(inertia_matrix());
+            m_h = Traits<Scalar>::cholesky_solve(LU, h);
+            m_Jt = Traits<Scalar>::cholesky_solve(LU, Jt);
         }
 
         ContactInertia G = J * m_Jt;
         ContactVector c = J * u + J * m_h * dt;
 
-        Eigen::DenseIndex it = 0;
-        for (int i = 0; i < num_contacts; ++i) {
+        for (int i = 0, j = 0; i < num_contacts; ++i, j += 3) {
             Vector3 complement = Vector3::Ones() * 0.1 * ScalarTraits::exp(8 * ScalarTraits::tanh(20 * d(i)));
-            SEGMENT3(G.diagonal(), it) += complement;
-
-            // Vector3 drift = Vector3::Ones() * d(i) / dt;
-            // SEGMENT3(c, it) += drift;
-
-            it += 3;
+            SEGMENT3(G.diagonal(), j) += complement;
         }
 
         auto p = solve_percussion(G, c);
@@ -100,7 +105,7 @@ public:
     }
 
     const int num_iters = 100;
-    const Scalar dt = 0.01;
+    Scalar dt = 0.01;
 
     State state;
     Control control;
@@ -111,8 +116,8 @@ public:
 protected:
     inline ContactVector
     solve_percussion(const ContactInertia& G, const ContactVector& c) const {
-        ContactInertia LU = LLT<ScalarTraits>::cholesky(G);
-        ContactVector p = -LLT<ScalarTraits>::cholesky_solve(LU, c);
+        ContactInertia LU = Traits<Scalar>::cholesky(G);
+        ContactVector p = -Traits<Scalar>::cholesky_solve(LU, c);
 
         auto max_abs = [](auto x) { return std::max(ScalarTraits::abs(x), Scalar(1)); };
         ContactVector r;
@@ -122,11 +127,11 @@ protected:
             SEGMENT3(r, i).fill(Scalar(1) / det / det);
         }
 
-        auto t = state.position().base_rotation();
+        Eigen::Quaternion<Scalar> t = state.position().base_rotation();
         for (int k = 0; k < num_iters; ++k) {
             p -= r.template cwiseProduct(G * p + c);
             for (int i = 0; i < contact_dims; i += 3)
-                SEGMENT3(p, i) = t.inverse() * prox(t * SEGMENT3(p, i));
+                SEGMENT3(p, i) = Traits<Scalar>::inverse(t) * prox(t * SEGMENT3(p, i));
         }
 
         return p;
@@ -137,8 +142,8 @@ protected:
         Scalar pn = std::max(Scalar(0), p(2));
         Scalar n = mu * pn;
 
-        Scalar px = std::min(n, std::max(-n, p(0)));
-        Scalar py = std::min(n, std::max(-n, p(1)));
+        Scalar px = std::min(n, std::max(Scalar(-n), p(0)));
+        Scalar py = std::min(n, std::max(Scalar(-n), p(1)));
 
         return {px, py, pn};
     }
