@@ -9,6 +9,3 @@ add_subdirectory(biped)
 
 add_executable(simulation simulation.cpp biped_model.cpp)
 target_link_libraries(simulation biped dl)
-
-add_executable(test test.cpp biped_model.cpp)
-target_link_libraries(test biped dl)

@@ -32,10 +32,10 @@ void set_init_position(rbd::Position<Scalar, Biped::rcg::JointSpaceDimension>& p
 int main() {
     auto model = std::make_shared<Biped::Model>();
 
-    Kinematics<Biped::Model> kinematics("kinematics", model);
+    Kinematics<Biped::Model> kinematics(model);
     kinematics.build_map();
 
-    Dynamics<Biped::Model> dynamics("dynamics", model);
+    Dynamics<Biped::Model> dynamics(model);
     dynamics.build_map();
 
     set_init_position(dynamics.params.x.position());

@@ -8,39 +8,23 @@
 #include "robot_model.h"
 #include "ad.h"
 
-template<typename T, typename ValueType>
-class Dynamics;
-
-template<typename T, typename ValueType>
-struct Parameter<Dynamics<T, ValueType>, ValueType> {
-    using Model = ModelBase<T>;
-
-    // inputs
-    rbd::State<ValueType, Model::joint_state_dims> x;
-    Eigen::Matrix<ValueType, Model::control_dims, 1> u;
-
-    // parameters
-    Eigen::Matrix<ValueType, Model::num_contacts, 1> d;
-    ValueType mu = 1;
-
-    template<typename Vector>
-    void fill(Eigen::MatrixBase<Vector>& vector) const {
-        vector << x, u, d, mu;
-    }
-};
-
-#define BASE \
-ADBase<      \
-    Dynamics<T>, \
-    ModelBase<T>::state_dims + ModelBase<T>::control_dims, \
-    ModelBase<T>::num_contacts + 1,                        \
-    ModelBase<T>::state_dims,                              \
-    ValueType, true>
-
 template<typename T, typename ValueType = double>
-class Dynamics : public BASE {
+class Dynamics : public ADBase<
+        Dynamics<T>,
+        ModelBase<T>::state_dims + ModelBase<T>::control_dims,
+        ModelBase<T>::num_contacts + 1,
+        ModelBase<T>::state_dims,
+        ValueType,
+        true> {
 public:
-    using Base = BASE;
+    using Model = ModelBase<T>;
+    using Base = ADBase<
+            Dynamics<T>,
+            Model::state_dims + Model::control_dims,
+            Model::num_contacts + 1,
+            Model::state_dims,
+            ValueType,
+            true>;
 
     using Base::input_dims;
     using Base::param_dims;
@@ -48,7 +32,6 @@ public:
 
     using Base::ad_fun;
 
-    using Model = ModelBase<T>;
     using typename Base::AD;
     using Scalar = typename Model::Scalar;
 
@@ -56,7 +39,7 @@ public:
     using ScalarVector = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
 
     template<typename U>
-    Dynamics(const std::string& name, const U& u) : Base(name), model(u) {}
+    explicit Dynamics(const U& u) : Base("dynamics"), model(u) {}
 
 private:
     void step() {
@@ -95,6 +78,46 @@ private:
     std::shared_ptr<ModelBase<T>> model;
 };
 
-#undef BASE
+template<typename T, typename ValueType>
+struct Parameter<Dynamics<T, ValueType>, ValueType> {
+    using Model = ModelBase<T>;
+
+    // inputs
+    rbd::State<ValueType, Model::joint_state_dims> x;
+    Eigen::Matrix<ValueType, Model::control_dims, 1> u;
+
+    // parameters
+    Eigen::Matrix<ValueType, Model::num_contacts, 1> d;
+    ValueType mu = 1;
+
+    DEF_PARAMETER_FILL(x, u, d, mu)
+};
+
+template<typename T, typename ValueType>
+class Passivity : public ADBase<
+        Passivity<T, ValueType>,
+        ModelBase<T>::state_dims + ModelBase<T>::velocity_dims,
+        0,
+        ModelBase<T>::control_dims,
+        ValueType> {
+public:
+    using Model = ModelBase<T>;
+    using Base = ADBase<
+            Passivity<T, ValueType>,
+            Model::state_dims + Model::velocity_dims,
+            0,
+            Model::control_dims,
+            ValueType>;
+};
+
+template<typename T, typename ValueType>
+struct Parameter<Passivity<T, ValueType>, ValueType> {
+    using Model = ModelBase<T>;
+
+    rbd::State<ValueType, Model::joint_state_dims> x;
+    typename rbd::Position<ValueType, Model::joint_state_dims>::Velocity a;
+
+    DEF_PARAMETER_FILL(x, a)
+};
 
 #endif //TO_IHC_2_DYNAMICS_H

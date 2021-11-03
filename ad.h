@@ -10,6 +10,12 @@
 
 #include "biped/rbd_types.h"
 
+#define DEF_PARAMETER_FILL(...) \
+template <typename Vector> \
+void fill(Eigen::MatrixBase<Vector>& vector) const { \
+    vector << __VA_ARGS__;    \
+}
+
 #define ASSIGN_SEGMENT(to, from, it, size) (to) << (from).template segment<(size)>(it); (it) += (size);
 #define FILL_SEGMENT(to, from, it, size) (to).template segment<(size)>(it) << (from); (it) += (size);
 
@@ -31,6 +37,8 @@ public:
     static constexpr int output_dims = OutputDims;
 
     static constexpr bool compute_jacobian = ComputeJacobian && (input_dims != 0);
+
+    using ValueVector = Eigen::Matrix<ValueType, Eigen::Dynamic, 1>;
 
     using CG = CppAD::cg::CG<ValueType>;
     using AD = CppAD::AD<CG>;
@@ -72,7 +80,6 @@ public:
         f << models[0]->ForwardZero(x);
 
         if (compute_jacobian && option == FIRST_ORDER) {
-            using ValueVector = Eigen::Matrix<ValueType, Eigen::Dynamic, 1>;
             Eigen::Map<ValueVector>(df.data(), df.size()) << models[1]->ForwardZero(x);
         }
     }
