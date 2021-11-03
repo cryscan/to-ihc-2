@@ -21,7 +21,7 @@ using Biped::rcg::ScalarTraits;
 template<typename Scalar>
 void set_init_position(rbd::Position<Scalar, Biped::rcg::JointSpaceDimension>& position) {
     typename rbd::Position<Scalar, Biped::rcg::JointSpaceDimension>::Velocity delta;
-    delta.base_angular() << 0, M_PI_2, 0;
+    delta.base_angular() << 0, 0, 0;
 
     position.base_position() << 0, 0, 0.7;
     position += delta;
@@ -30,16 +30,6 @@ void set_init_position(rbd::Position<Scalar, Biped::rcg::JointSpaceDimension>& p
 }
 
 int main() {
-    /*
-    rbd::State<double, 6> state;
-
-    state.velocity().base_angular() << 0, 0, M_PI_2;
-    state.velocity().base_linear() << 0, 1, 0;
-    state.position() += state.velocity();
-
-    std::cout << state.transpose() << std::endl;
-     */
-
     auto model = std::make_shared<Biped::Model>();
 
     Kinematics<Biped::Model> kinematics("kinematics", model);
@@ -49,15 +39,12 @@ int main() {
     dynamics.build_map();
 
     set_init_position(dynamics.params.x.position());
-    dynamics.params.x.velocity().base_angular() << M_PI_2, 0, 0;
-    dynamics.params.x.velocity().base_linear() << 0, 0, 0;
-    dynamics.params.x.velocity().joint_velocity() << 0, 0, M_PI_2, 0, 0, M_PI_2;
     dynamics.params.u.setZero();
 
     std::ofstream os("out.txt");
     os << dynamics.params.x.transpose() << '\n';
 
-    for (int i = 0; i < 2000; ++i) {
+    for (int i = 0; i < 200; ++i) {
         kinematics.params.q << dynamics.params.x.position();
         kinematics.evaluate();
 
@@ -68,6 +55,6 @@ int main() {
 
         dynamics.params.x << dynamics.f;
 
-        os << dynamics.f.transpose() << '\n';
+        os << dynamics.f.transpose() << '\t' << kinematics.f.transpose() << '\n';
     }
 }

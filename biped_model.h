@@ -21,14 +21,15 @@ namespace Biped {
             rcg::ScalarTraits,
             rcg::JointSpaceDimension,
             rcg::JointSpaceDimension,
-            7> {
+            2> {
     public:
         using Base = ModelBase;
         using Base::ScalarTraits;
         using Base::Scalar;
 
         enum EE {
-            BODY, L_THIGH, R_THIGH, L_SHIN, R_SHIN, L_FOOT, R_FOOT
+            // BODY, L_THIGH, R_THIGH, L_SHIN, R_SHIN, L_FOOT, R_FOOT
+            L_FOOT, R_FOOT
         };
 
         explicit Model(int num_iters = 100);

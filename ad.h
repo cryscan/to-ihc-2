@@ -17,7 +17,7 @@ template<typename T, typename ValueType>
 struct Parameter {
 };
 
-template<typename Derived, int InputDims, int ParamDims, int OutputDims, typename ValueType>
+template<typename Derived, int InputDims, int ParamDims, int OutputDims, typename ValueType, bool ComputeJacobian = false>
 class ADBase {
 public:
     enum EvalOption {
@@ -26,10 +26,11 @@ public:
     };
 
     using Params = Parameter<Derived, ValueType>;
-
     static constexpr int input_dims = InputDims;
     static constexpr int param_dims = ParamDims;
     static constexpr int output_dims = OutputDims;
+
+    static constexpr bool compute_jacobian = ComputeJacobian && (input_dims != 0);
 
     using CG = CppAD::cg::CG<ValueType>;
     using AD = CppAD::AD<CG>;
@@ -52,11 +53,11 @@ public:
     Params params;
 
     inline void build_map() {
-        build_zero();
-        // if constexpr(input_dims != 0) build_jacobian();
-
         using namespace CppAD::cg;
         if (!system::isFile(library_name)) {
+            build_zero();
+            if constexpr(compute_jacobian) build_jacobian();
+
             std::cout << "Compiling " << library_name << std::endl;
             compile_library();
         } else {
@@ -70,9 +71,9 @@ public:
         params.template fill(x);
         f << models[0]->ForwardZero(x);
 
-        if (option == FIRST_ORDER) {
+        if (compute_jacobian && option == FIRST_ORDER) {
             using ValueVector = Eigen::Matrix<ValueType, Eigen::Dynamic, 1>;
-            // Eigen::Map<ValueVector>(df.data(), df.size()) << models[1]->ForwardZero(x);
+            Eigen::Map<ValueVector>(df.data(), df.size()) << models[1]->ForwardZero(x);
         }
     }
 
@@ -116,7 +117,7 @@ protected:
                                                       {ad_fun[1], jacobian_name}};
 
         ModelLibraryCSourceGen<ValueType> library_c_source_gen(c_source_gen[0]);
-        // if constexpr (input_dims != 0) library_c_source_gen.addModel(c_source_gen[1]);
+        if constexpr (compute_jacobian) library_c_source_gen.addModel(c_source_gen[1]);
 
         DynamicModelLibraryProcessor<ValueType> processor(library_c_source_gen, name);
         GccCompiler<ValueType> compiler;
@@ -127,14 +128,14 @@ protected:
         lib = processor.createDynamicLibrary(compiler);
 
         models[0] = lib->model(name);
-        // if constexpr (input_dims != 0) models[1] = lib->model(jacobian_name);
+        if constexpr (compute_jacobian) models[1] = lib->model(jacobian_name);
     }
 
     void load_library() {
         using namespace CppAD::cg;
         lib = std::make_unique<LinuxDynamicLib<ValueType>>(library_name);
         models[0] = lib->model(name);
-        // if constexpr (input_dims != 0) models[1] = lib->model(jacobian_name);
+        if constexpr (compute_jacobian) models[1] = lib->model(jacobian_name);
     }
 };
 

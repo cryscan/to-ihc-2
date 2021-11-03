@@ -21,12 +21,11 @@ struct Parameter<Dynamics<T, ValueType>, ValueType> {
 
     // parameters
     Eigen::Matrix<ValueType, Model::num_contacts, 1> d;
-    ValueType dt = 0.01;
     ValueType mu = 1;
 
     template<typename Vector>
     void fill(Eigen::MatrixBase<Vector>& vector) const {
-        vector << x, u, d, dt, mu;
+        vector << x, u, d, mu;
     }
 };
 
@@ -34,9 +33,9 @@ struct Parameter<Dynamics<T, ValueType>, ValueType> {
 ADBase<      \
     Dynamics<T>, \
     ModelBase<T>::state_dims + ModelBase<T>::control_dims, \
-    ModelBase<T>::num_contacts + 2,                        \
+    ModelBase<T>::num_contacts + 1,                        \
     ModelBase<T>::state_dims,                              \
-    ValueType>
+    ValueType, true>
 
 template<typename T, typename ValueType = double>
 class Dynamics : public BASE {
@@ -84,7 +83,6 @@ private:
         ASSIGN_SEGMENT(model->state, ad_x, it, Model::state_dims)
         ASSIGN_SEGMENT(model->control, ad_x, it, Model::control_dims)
         ASSIGN_SEGMENT(model->d, ad_x, it, Model::num_contacts)
-        model->dt = ad_x(it++);
         model->mu = ad_x(it++);
 
         step();

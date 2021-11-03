@@ -78,7 +78,6 @@ public:
         ContactJacobianTranspose m_Jt;
         ContactJacobian J = contact_jacobian();
 
-        auto q = state.position().joint_position();
         auto u = state.velocity().base();
 
         {
@@ -96,6 +95,10 @@ public:
         for (int i = 0, j = 0; i < num_contacts; ++i, j += 3) {
             Vector3 complement = Vector3::Ones() * 0.1 * ScalarTraits::exp(8 * ScalarTraits::tanh(20 * d(i)));
             SEGMENT3(G.diagonal(), j) += complement;
+
+            Eigen::Quaternion<Scalar> r = state.position().base_rotation();
+            Vector3 drift = Vector3(0, 0, std::min(Scalar(0), d(i) / dt));
+            SEGMENT3(c, j) += Traits<Scalar>::inverse(r) * drift;
         }
 
         auto p = solve_percussion(G, c);
@@ -105,7 +108,7 @@ public:
     }
 
     const int num_iters = 100;
-    Scalar dt = 0.01;
+    const Scalar dt = 0.01;
 
     State state;
     Control control;

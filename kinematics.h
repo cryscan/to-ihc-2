@@ -24,8 +24,8 @@ struct Parameter<Kinematics<T, ValueType>, ValueType> {
 #define BASE \
 ADBase<      \
     Kinematics<T>, \
-    0,       \
     ModelBase<T>::position_dims, \
+    0,       \
     ModelBase<T>::contact_dims,  \
     ValueType>
 

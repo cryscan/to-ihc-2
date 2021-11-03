@@ -119,8 +119,8 @@ struct Traits {
         } else return r.inverse();
     }
 
-    template<int N>
-    inline static Eigen::Matrix<Scalar, N, 1> normalize(const Eigen::Matrix<Scalar, N, 1>& vector) {
+    template<int N, int Options = 0>
+    inline static Eigen::Matrix<Scalar, N, 1> normalize(const Eigen::Matrix<Scalar, N, 1, Options>& vector) {
         if constexpr (std::is_same_v<Scalar, typename CppADCodeGenTraits<double>::Scalar>) {
             Scalar z = vector.norm();
             z = CppAD::CondExpGt(z, Scalar(0), z, Scalar(1));

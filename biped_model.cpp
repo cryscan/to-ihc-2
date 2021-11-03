@@ -16,20 +16,20 @@ namespace Biped {
         auto q = state.position().joint_position();
         auto base_pose = state.position().base_pose();
 
-        // Vector3 trunk = state.position().base_position();
-        Vector3 body = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_body(q)).translation();
+        // Vector3 body = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_body(q)).translation();
 
-        Vector3 L_thigh = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_fr_L_thigh(q)).translation();
-        Vector3 R_thigh = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_fr_R_thigh(q)).translation();
+        // Vector3 L_thigh = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_fr_L_thigh(q)).translation();
+        // Vector3 R_thigh = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_fr_R_thigh(q)).translation();
 
-        Vector3 L_shin = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_fr_L_shin(q)).translation();
-        Vector3 R_shin = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_fr_R_shin(q)).translation();
+        // Vector3 L_shin = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_fr_L_shin(q)).translation();
+        // Vector3 R_shin = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_fr_R_shin(q)).translation();
 
         Vector3 L_foot = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_L_foot(q)).translation();
         Vector3 R_foot = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_R_foot(q)).translation();
 
         ContactVector percussion;
-        percussion << body, L_thigh, R_thigh, L_shin, R_shin, L_foot, R_foot;
+        // percussion << body, L_thigh, R_thigh, L_shin, R_shin, L_foot, R_foot;
+        percussion << L_foot, R_foot;
         return percussion;
     }
 
@@ -74,6 +74,7 @@ namespace Biped {
         ContactJacobian jacobian = ContactJacobian::Zero();
         Matrix3 jacobian_base_linear = Matrix3::Identity();
 
+        /*
         {
             // body
             auto t = Eigen::Transform<Scalar, 3, Eigen::Affine>(homogeneous_transforms.fr_trunk_X_body(q));
@@ -130,6 +131,7 @@ namespace Biped {
             Matrix3 jacobian_base_angular = -cross_product(p);
             jacobian.middleRows<3>(R_SHIN * 3) << jacobian_base_angular, jacobian_base_linear, jacobian_joint;
         }
+         */
 
         {
             // left foot
