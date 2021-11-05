@@ -28,7 +28,6 @@ namespace Biped {
         using Base::Scalar;
 
         enum EE {
-            // BODY, L_THIGH, R_THIGH, L_SHIN, R_SHIN, L_FOOT, R_FOOT
             L_FOOT, R_FOOT
         };
 

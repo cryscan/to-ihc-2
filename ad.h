@@ -72,6 +72,9 @@ public:
             std::cout << "Loading " << library_name << std::endl;
             load_library();
         }
+
+        models[0] = lib->model(name);
+        if constexpr (compute_jacobian) models[1] = lib->model(jacobian_name);
     }
 
     inline void evaluate(EvalOption option = FIRST_ORDER) {
@@ -133,16 +136,11 @@ protected:
         save_files.saveSources();
 
         lib = processor.createDynamicLibrary(compiler);
-
-        models[0] = lib->model(name);
-        if constexpr (compute_jacobian) models[1] = lib->model(jacobian_name);
     }
 
     void load_library() {
         using namespace CppAD::cg;
         lib = std::make_unique<LinuxDynamicLib<ValueType>>(library_name);
-        models[0] = lib->model(name);
-        if constexpr (compute_jacobian) models[1] = lib->model(jacobian_name);
     }
 };
 

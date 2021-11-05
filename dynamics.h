@@ -10,7 +10,7 @@
 
 template<typename T, typename ValueType = double>
 class Dynamics : public ADBase<
-        Dynamics<T>,
+        Dynamics<T, ValueType>,
         ModelBase<T>::state_dims + ModelBase<T>::control_dims,
         ModelBase<T>::num_contacts + 1,
         ModelBase<T>::state_dims,
@@ -19,7 +19,7 @@ class Dynamics : public ADBase<
 public:
     using Model = ModelBase<T>;
     using Base = ADBase<
-            Dynamics<T>,
+            Dynamics<T, ValueType>,
             Model::state_dims + Model::control_dims,
             Model::num_contacts + 1,
             Model::state_dims,
@@ -48,7 +48,7 @@ private:
         auto dt = model->dt;
 
         model->state.position() = q + u * dt / 2;
-        auto[m_h, m_Jt_p] = model->contact();
+        auto[m_h, m_Jt_p, _] = model->contact();
 
         decltype(u) ue = u + m_h * dt + m_Jt_p;
         q += (u + ue) * dt / 2;
@@ -75,7 +75,7 @@ private:
         ad_fun[0].optimize("no_compare_op");
     }
 
-    std::shared_ptr<ModelBase<T>> model;
+    std::shared_ptr<Model> model;
 };
 
 template<typename T, typename ValueType>
@@ -91,33 +91,6 @@ struct Parameter<Dynamics<T, ValueType>, ValueType> {
     ValueType mu = 1;
 
     DEF_PARAMETER_FILL(x, u, d, mu)
-};
-
-template<typename T, typename ValueType>
-class Passivity : public ADBase<
-        Passivity<T, ValueType>,
-        ModelBase<T>::state_dims + ModelBase<T>::velocity_dims,
-        0,
-        ModelBase<T>::control_dims,
-        ValueType> {
-public:
-    using Model = ModelBase<T>;
-    using Base = ADBase<
-            Passivity<T, ValueType>,
-            Model::state_dims + Model::velocity_dims,
-            0,
-            Model::control_dims,
-            ValueType>;
-};
-
-template<typename T, typename ValueType>
-struct Parameter<Passivity<T, ValueType>, ValueType> {
-    using Model = ModelBase<T>;
-
-    rbd::State<ValueType, Model::joint_state_dims> x;
-    typename rbd::Position<ValueType, Model::joint_state_dims>::Velocity a;
-
-    DEF_PARAMETER_FILL(x, a)
 };
 
 #endif //TO_IHC_2_DYNAMICS_H

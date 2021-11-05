@@ -10,14 +10,14 @@
 
 template<typename T, typename ValueType = double>
 class Kinematics : public ADBase<
-        Kinematics<T>,
+        Kinematics<T, ValueType>,
         ModelBase<T>::position_dims,
         0,
         ModelBase<T>::contact_dims,
         ValueType> {
 public:
     using Model = ModelBase<T>;
-    using Base = ADBase<Kinematics<T>, Model::position_dims, 0, Model::contact_dims, ValueType>;
+    using Base = ADBase<Kinematics<T, ValueType>, Model::position_dims, 0, Model::contact_dims, ValueType>;
 
     using Base::input_dims;
     using Base::param_dims;
@@ -46,7 +46,7 @@ private:
         ad_fun[0].optimize("no_compare_op");
     }
 
-    std::shared_ptr<ModelBase<T>> model;
+    std::shared_ptr<Model> model;
 };
 
 template<typename T, typename ValueType>

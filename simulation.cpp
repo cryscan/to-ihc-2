@@ -23,7 +23,7 @@ void set_init_position(rbd::Position<Scalar, Biped::rcg::JointSpaceDimension>& p
     typename rbd::Position<Scalar, Biped::rcg::JointSpaceDimension>::Velocity delta;
     delta.base_angular() << 0, 0, 0;
 
-    position.base_position() << 0, 0, 0.7;
+    position.base_position() << 0, 0, 1.0;
     position += delta;
 
     position.joint_position() << 0, M_PI_4, -M_PI_2, 0, M_PI_4, -M_PI_2;
@@ -55,6 +55,6 @@ int main() {
 
         dynamics.params.x << dynamics.f;
 
-        os << dynamics.f.transpose() << '\t' << kinematics.f.transpose() << '\n';
+        os << dynamics.f.transpose() << '\n';
     }
 }

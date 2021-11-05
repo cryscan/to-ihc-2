@@ -49,6 +49,7 @@ public:
 
     static constexpr int num_contacts = NumContacts;
     static constexpr int contact_dims = 3 * num_contacts;
+    static constexpr int contact_force_dims = 6 * num_contacts;
 
     using Control = Eigen::Matrix<Scalar, control_dims, 1>;
     using JointState = Eigen::Matrix<Scalar, joint_state_dims, 1>;
@@ -57,11 +58,14 @@ public:
     using ContactJacobian = Eigen::Matrix<Scalar, contact_dims, velocity_dims>;
     using ContactJacobianTranspose = Eigen::Matrix<Scalar, velocity_dims, contact_dims>;
     using ContactInertia = Eigen::Matrix<Scalar, contact_dims, contact_dims>;
-    using ContactVector = Eigen::Matrix<Scalar, contact_dims, 1>;
     using ContactDistance = Eigen::Matrix<Scalar, num_contacts, 1>;
+    using ContactVector = Eigen::Matrix<Scalar, contact_dims, 1>;
+    using ContactForce = Eigen::Matrix<Scalar, contact_force_dims, 1>;
 
     using Matrix3 = Eigen::Matrix<Scalar, 3, 3>;
     using Vector3 = Eigen::Matrix<Scalar, 3, 1>;
+    using Vector6 = Eigen::Matrix<Scalar, 6, 1>;
+    using Affine3 = Eigen::Transform<Scalar, 3, Eigen::Affine>;
     using Quaternion = Eigen::Quaternion<Scalar>;
 
     explicit ModelBase(int num_iters) : num_iters(num_iters) {}
@@ -73,8 +77,8 @@ public:
     virtual Acceleration nonlinear_terms() const = 0;
     virtual ContactJacobian contact_jacobian() const = 0;
 
-    inline std::tuple<Acceleration, Velocity> contact() const {
-        Velocity m_h, m_Jt_p;
+    inline std::tuple<Acceleration, Velocity, ContactVector> contact() const {
+        Velocity m_h;
         ContactJacobianTranspose m_Jt;
         ContactJacobian J = contact_jacobian();
 
@@ -102,9 +106,7 @@ public:
         }
 
         auto p = solve_percussion(G, c);
-        m_Jt_p = m_Jt * p;
-
-        return {m_h, m_Jt_p};
+        return {m_h, m_Jt * p, p};
     }
 
     const int num_iters = 100;
