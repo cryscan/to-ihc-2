@@ -86,7 +86,8 @@ public:
 
         {
             ContactJacobianTranspose Jt = J.transpose();
-            auto h = nonlinear_terms();
+            Acceleration h = -nonlinear_terms();
+            h.joint_velocity() += control;
 
             auto LU = Traits<Scalar>::cholesky(inertia_matrix());
             m_h = Traits<Scalar>::cholesky_solve(LU, h);
