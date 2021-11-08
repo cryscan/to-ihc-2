@@ -25,11 +25,12 @@ using Biped::rcg::ScalarTraits;
 template<typename Scalar>
 void set_init_position(rbd::Position<Scalar, Biped::rcg::JointSpaceDimension>& position) {
     typename rbd::Position<Scalar, Biped::rcg::JointSpaceDimension>::Velocity delta;
-    delta.base_angular() << 0, 0, 0;
+    // delta.base_angular() << M_PI, 0, 0;
 
-    // position.base_position() << 0, 0, 0.725;
-    position.base_position() << 0, 0, 1;
-    position += delta;
+    position.base_position() << 0, 0, 0.725;
+    // position.base_position() << 0, 0, 1;
+    // position.base_position() << 0, 0, -0.724;
+    // position += delta;
 
     position.joint_position() << 0, M_PI_4, -M_PI_2, 0, M_PI_4, -M_PI_2;
 }
@@ -57,10 +58,12 @@ int main() {
 
     set_init_position(dynamics.params.x.position());
     dynamics.params.u.setZero();
-    // dynamics.params.u(2) = dynamics.params.u(5) = 1;
 
-    Eigen::Matrix<double, Biped::Model::joint_state_dims, 1> q_;
-    q_ << 0, M_PI_4, -M_PI_2, 0, M_PI_4, -M_PI_2;
+    Eigen::Matrix<double, Biped::Model::joint_state_dims, 1> q_star;
+    q_star << 0, M_PI_4, -M_PI_2, 0, M_PI_4, -M_PI_2;
+
+    Eigen::Matrix<double, Biped::Model::contact_dims, 1> fd;
+    fd.setZero();
 
     std::ofstream osx("force.txt");
 
@@ -77,11 +80,11 @@ int main() {
         inertia.params.x << dynamics.params.x;
         inertia.evaluate();
 
-        constraints.params.x << dynamics.params.x;
-        constraints.evaluate();
-
         nonlinear_terms.params.x << dynamics.params.x;
         nonlinear_terms.evaluate();
+
+        constraints.params.x << dynamics.params.x;
+        constraints.evaluate();
 
         contact_forces.params.x << dynamics.params.x;
         contact_forces.params.u << dynamics.params.u;
@@ -91,12 +94,16 @@ int main() {
         osx << contact_forces.f.transpose() << '\n';
 
         // simple PD controller
-        Eigen::Matrix<double, Biped::Model::joint_state_dims, 1> y, yd;
-        yd = -dynamics.params.x.velocity().joint_velocity();
-        y = q_ - dynamics.params.x.position().joint_position();
+        double kp = 3600, kv = 120;
+        constexpr int joint_state_dims = Biped::Model::joint_state_dims;
 
-        double kp = 10, kd = 0.1;
-        dynamics.params.u = kp * y + kd * yd;
+        Eigen::Matrix<double, joint_state_dims, 1> ep, ev;
+        ev = -dynamics.params.x.velocity().joint_velocity();
+        ep = q_star - dynamics.params.x.position().joint_position();
+
+        dynamics.params.u =
+                inertia.get().bottomRightCorner<joint_state_dims, joint_state_dims>() * (kp * ep + kv * ev)
+                + nonlinear_terms.f.tail<joint_state_dims>();
 
         dynamics.evaluate();
 

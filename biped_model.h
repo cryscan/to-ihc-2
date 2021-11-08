@@ -38,6 +38,7 @@ namespace Biped {
         Inertia inertia_matrix() const override;
         Inertia inverse_inertia_matrix() const override;
         Acceleration nonlinear_terms() const override;
+        Acceleration gravity_terms() const override;
         ContactJacobian contact_jacobian() const override;
 
     private:

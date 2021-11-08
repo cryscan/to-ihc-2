@@ -52,6 +52,22 @@ namespace Biped {
         return nle;
     }
 
+    Model::Acceleration Model::gravity_terms() const {
+        rcg::JointState q = state.position().joint_position();
+
+        rcg::Acceleration g = rcg::Acceleration::Zero();
+        auto r = state.position().base_rotation();
+        g.tail<3>() = Traits<Scalar>::inverse(r) * Vector3(0, 0, -rcg::g);
+
+        Acceleration nle;
+        rcg::Force f;
+        rcg::JointState tau;
+
+        inverse_dynamics.G_terms_fully_actuated(f, tau, g, q);
+        nle << f, tau;
+        return nle;
+    }
+
     Model::ContactJacobian Model::contact_jacobian() const {
         using JacobianJoint = Eigen::Matrix<Scalar, 3, joint_state_dims>;
 

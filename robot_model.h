@@ -49,7 +49,6 @@ public:
 
     static constexpr int num_contacts = NumContacts;
     static constexpr int contact_dims = 3 * num_contacts;
-    static constexpr int contact_force_dims = 6 * num_contacts;
 
     using Control = Eigen::Matrix<Scalar, control_dims, 1>;
     using JointState = Eigen::Matrix<Scalar, joint_state_dims, 1>;
@@ -60,7 +59,6 @@ public:
     using ContactInertia = Eigen::Matrix<Scalar, contact_dims, contact_dims>;
     using ContactDistance = Eigen::Matrix<Scalar, num_contacts, 1>;
     using ContactVector = Eigen::Matrix<Scalar, contact_dims, 1>;
-    using ContactForce = Eigen::Matrix<Scalar, contact_force_dims, 1>;
 
     using Matrix3 = Eigen::Matrix<Scalar, 3, 3>;
     using Vector3 = Eigen::Matrix<Scalar, 3, 1>;
@@ -75,6 +73,7 @@ public:
     virtual Inertia inertia_matrix() const = 0;
     virtual Inertia inverse_inertia_matrix() const = 0;
     virtual Acceleration nonlinear_terms() const = 0;
+    virtual Acceleration gravity_terms() const = 0;
     virtual ContactJacobian contact_jacobian() const = 0;
 
     inline std::tuple<Acceleration, Velocity, ContactVector> contact() const {
