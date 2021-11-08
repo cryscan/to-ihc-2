@@ -38,7 +38,9 @@ namespace gen {
         explicit Inertia(const U& u) : Base("inertia"), model(u) {}
 
         MatrixType<ValueType> get() const {
-            return Eigen::Map<MatrixType<ValueType>>(Base::f);
+            MatrixType<ValueType> matrix;
+            Eigen::Map<Eigen::Matrix<ValueType, Eigen::Dynamic, 1>>(matrix.data(), matrix.size()) << Base::f;
+            return matrix;
         }
 
     private:

@@ -37,13 +37,18 @@ namespace gen {
         using ScalarVector = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
 
         template<typename U>
-        using MatrixType = Eigen::Matrix<U, Model::Inertia::RowsAtCompileTime, Model::Inertia::ColsAtCompileTime>;
+        using MatrixType = Eigen::Matrix<
+                U,
+                Model::ContactJacobian::RowsAtCompileTime,
+                Model::ContactJacobian::ColsAtCompileTime>;
 
         template<typename U>
         explicit Constraints(const U& u) : Base("constraints"), model(u) {}
 
         MatrixType<ValueType> get() const {
-            return Eigen::Map<MatrixType<ValueType>>(Base::f);
+            MatrixType<ValueType> matrix;
+            Eigen::Map<Eigen::Matrix<ValueType, Eigen::Dynamic, 1>>(matrix.data(), matrix.size()) << Base::f;
+            return matrix;
         }
 
     private:
