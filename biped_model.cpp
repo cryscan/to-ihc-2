@@ -52,20 +52,40 @@ namespace Biped {
         return nle;
     }
 
-    Model::Acceleration Model::gravity_terms() const {
+    std::tuple<Model::JointState, Model::Vector6>
+    Model::id(const Model::JointState& qdd, const ContactVector& f) const {
         rcg::JointState q = state.position().joint_position();
+        rcg::JointState u = state.velocity().joint_velocity();
+
+        rcg::Velocity v = state.velocity().base_spatial();
 
         rcg::Acceleration g = rcg::Acceleration::Zero();
         auto r = state.position().base_rotation();
         g.tail<3>() = Traits<Scalar>::inverse(r) * Vector3(0, 0, -rcg::g);
 
-        Acceleration nle;
-        rcg::Force f;
+        decltype(inverse_dynamics)::ExtForces ext_forces;
+        {
+            rcg::Force t;
+            Vector3 p = Affine3(homogeneous_transforms.fr_trunk_X_L_foot(q)).translation();
+            Vector3 l = f.segment<3>(L_FOOT * 3);
+            t << p.cross(l), l;
+            t = force_transforms.fr_trunk_X_fr_L_shin(q) * t;
+            ext_forces[rcg::L_SHIN] = t;
+        }
+        {
+            rcg::Force t;
+            Vector3 p = Affine3(homogeneous_transforms.fr_trunk_X_R_foot(q)).translation();
+            Vector3 l = f.segment<3>(R_FOOT * 3);
+            t << p.cross(l), l;
+            t = force_transforms.fr_trunk_X_fr_R_shin(q) * t;
+            ext_forces[rcg::R_SHIN] = t;
+        }
+
+        rcg::Acceleration a;
         rcg::JointState tau;
 
-        inverse_dynamics.G_terms_fully_actuated(f, tau, g, q);
-        nle << f, tau;
-        return nle;
+        inverse_dynamics.id(tau, a, g, v, q, u, qdd, ext_forces);
+        return {tau, a};
     }
 
     Model::ContactJacobian Model::contact_jacobian() const {

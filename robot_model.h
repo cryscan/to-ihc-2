@@ -73,7 +73,7 @@ public:
     virtual Inertia inertia_matrix() const = 0;
     virtual Inertia inverse_inertia_matrix() const = 0;
     virtual Acceleration nonlinear_terms() const = 0;
-    virtual Acceleration gravity_terms() const = 0;
+    virtual std::tuple<JointState, Vector6> id(const JointState& qdd, const ContactVector& f) const = 0;
     virtual ContactJacobian contact_jacobian() const = 0;
 
     inline std::tuple<Acceleration, Velocity, ContactVector> contact() const {

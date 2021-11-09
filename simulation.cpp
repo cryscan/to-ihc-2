@@ -19,16 +19,17 @@
 #include "gen/constraints.h"
 #include "gen/nonlinear_terms.h"
 #include "gen/contact_forces.h"
+#include "gen/regulator.h"
 
 using Biped::rcg::ScalarTraits;
 
 template<typename Scalar>
 void set_init_position(rbd::Position<Scalar, Biped::rcg::JointSpaceDimension>& position) {
     typename rbd::Position<Scalar, Biped::rcg::JointSpaceDimension>::Velocity delta;
-    // delta.base_angular() << M_PI, 0, 0;
+    delta.base_angular() << M_PI, 0, 0;
 
-    position.base_position() << 0, 0, 0.725;
-    // position.base_position() << 0, 0, 1;
+    // position.base_position() << 0, 0, 0.725;
+    position.base_position() << 0, 0, 1;
     // position.base_position() << 0, 0, -0.724;
     // position += delta;
 
@@ -56,14 +57,18 @@ int main() {
     gen::ContactForces<Biped::Model> contact_forces(model);
     contact_forces.build_map();
 
+    gen::Regulator<Biped::Model> regulator(model);
+    regulator.build_map();
+
     set_init_position(dynamics.params.x.position());
     dynamics.params.u.setZero();
 
-    Eigen::Matrix<double, Biped::Model::joint_state_dims, 1> q_star;
-    q_star << 0, M_PI_4, -M_PI_2, 0, M_PI_4, -M_PI_2;
-
-    Eigen::Matrix<double, Biped::Model::contact_dims, 1> fd;
-    fd.setZero();
+    regulator.params.kp = 2500;
+    regulator.params.kv = 100;
+    regulator.params.ka = 1;
+    regulator.params.qd << 0, M_PI_4, -M_PI_2, 0, M_PI_4, -M_PI_2;
+    regulator.params.vd.setZero();
+    regulator.params.ad.setZero();
 
     std::ofstream osx("force.txt");
 
@@ -91,20 +96,14 @@ int main() {
         contact_forces.params.d << dynamics.params.d;
         contact_forces.evaluate();
 
-        osx << contact_forces.f.transpose() << '\n';
+        regulator.params.x << dynamics.params.x;
+        regulator.params.f << 0.5 * contact_forces.f;
+        regulator.evaluate();
 
-        // simple PD controller
-        double kp = 3600, kv = 120;
-        constexpr int joint_state_dims = Biped::Model::joint_state_dims;
+        osx << i << ".\t" << contact_forces.f.transpose() << '\n';
+        osx << i << ".\t" << regulator.f.transpose() << '\n';
 
-        Eigen::Matrix<double, joint_state_dims, 1> ep, ev;
-        ev = -dynamics.params.x.velocity().joint_velocity();
-        ep = q_star - dynamics.params.x.position().joint_position();
-
-        dynamics.params.u =
-                inertia.get().bottomRightCorner<joint_state_dims, joint_state_dims>() * (kp * ep + kv * ev)
-                + nonlinear_terms.f.tail<joint_state_dims>();
-
+        dynamics.params.u << regulator.f;
         dynamics.evaluate();
 
         dynamics.params.x << dynamics.f;
