@@ -14,11 +14,16 @@ namespace gen {
             Kinematics<T, ValueType>,
             ModelBase<T>::state_dims,
             0,
-            ModelBase<T>::contact_dims,
+            ModelBase<T>::contact_dims + 3,
             ValueType> {
     public:
         using Model = ModelBase<T>;
-        using Base = ADBase<Kinematics<T, ValueType>, Model::state_dims, 0, Model::contact_dims, ValueType>;
+        using Base = ADBase<
+                Kinematics<T, ValueType>,
+                Model::state_dims,
+                0,
+                Model::contact_dims + 3,
+                ValueType>;
 
         using Base::input_dims;
         using Base::param_dims;
@@ -34,6 +39,14 @@ namespace gen {
         template<typename U>
         explicit Kinematics(const U& u) : Base("kinematics"), model(u) {}
 
+        Eigen::Matrix<ValueType, Model::contact_dims, 1> end_effector_positions() const {
+            return Base::f.template head<Model::contact_dims>();
+        }
+
+        Eigen::Matrix<ValueType, 3, 1> com() const {
+            return Base::f.template tail<3>();
+        }
+
     private:
         void build_zero() override {
             ScalarVector ad_x = Base::ad_x.template cast<Scalar>();
@@ -41,7 +54,7 @@ namespace gen {
             CppAD::Independent(ad_x);
 
             model->state << ad_x;
-            ad_y << model->end_effector_positions();
+            ad_y << model->end_effector_positions(), model->com();
 
             ad_fun[0].template Dependent(ad_y);
             ad_fun[0].optimize("no_compare_op");

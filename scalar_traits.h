@@ -12,6 +12,9 @@
 #include <Eigen/Geometry>
 #include <cppad/cg.hpp>
 
+template<typename Scalar>
+struct Traits;
+
 template<typename Base>
 struct CppADCodeGenTraits {
     using CG = typename CppAD::cg::CG<Base>;
@@ -38,8 +41,8 @@ struct CppADCodeGenTraits {
     template<int Dims>
     inline static Eigen::Matrix<Scalar, Dims, 1>
     solve(const Eigen::Matrix<Scalar, Dims, Dims>& A, const Eigen::Matrix<Scalar, Dims, 1>& b) {
-        auto LU = cholesky(A);
-        return cholesky_solve(LU, b);
+        auto LU = Traits<Scalar>::cholesky(A);
+        return Traits<Scalar>::cholesky_solve(LU, b);
     }
 };
 

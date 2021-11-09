@@ -70,17 +70,15 @@ int main() {
     regulator.params.vd.setZero();
     regulator.params.ad.setZero();
 
-    std::ofstream osx("force.txt");
-
+    std::ofstream osx("com.txt");
     std::ofstream os("out.txt");
-    os << dynamics.params.x.transpose() << '\n';
 
     for (int i = 0; i < 1000; ++i) {
         kinematics.params.x << dynamics.params.x;
         kinematics.evaluate();
 
         for (int j = 0, k = 2; j < Biped::Model::num_contacts; ++j, k += 3)
-            dynamics.params.d(j) = kinematics.f(k);
+            dynamics.params.d(j) = kinematics.end_effector_positions()(k);
 
         inertia.params.x << dynamics.params.x;
         inertia.evaluate();
@@ -100,14 +98,12 @@ int main() {
         regulator.params.f << 0.5 * contact_forces.f;
         regulator.evaluate();
 
-        osx << i << ".\t" << contact_forces.f.transpose() << '\n';
-        osx << i << ".\t" << regulator.f.transpose() << '\n';
+        os << dynamics.f.transpose() << '\n';
+        osx << kinematics.com().transpose() << '\n';
 
         dynamics.params.u << regulator.f;
         dynamics.evaluate();
 
         dynamics.params.x << dynamics.f;
-
-        os << dynamics.f.transpose() << '\n';
     }
 }

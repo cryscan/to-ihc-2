@@ -22,6 +22,12 @@ namespace Biped {
         return percussion;
     }
 
+    Model::Vector3 Model::com() const {
+        auto q = state.position().joint_position();
+        auto base_pose = state.position().base_pose();
+        return base_pose * rcg::getWholeBodyCOM(inertia_properties, q, homogeneous_transforms);
+    }
+
     Model::Inertia Model::inertia_matrix() const {
         auto q = state.position().joint_position();
         return jsim(q).base();

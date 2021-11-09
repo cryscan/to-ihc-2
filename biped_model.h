@@ -12,6 +12,7 @@
 #include "biped/inertia_properties.h"
 #include "biped/inverse_dynamics.h"
 #include "biped/jsim.h"
+#include "biped/miscellaneous.h"
 
 #include "robot_model.h"
 
@@ -34,6 +35,7 @@ namespace Biped {
         explicit Model(int num_iters = 100);
 
         ContactVector end_effector_positions() const override;
+        Vector3 com() const override;
 
         Inertia inertia_matrix() const override;
         Inertia inverse_inertia_matrix() const override;

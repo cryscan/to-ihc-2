@@ -69,6 +69,7 @@ public:
     explicit ModelBase(int num_iters) : num_iters(num_iters) {}
 
     virtual ContactVector end_effector_positions() const = 0;
+    virtual Vector3 com() const = 0;
 
     virtual Inertia inertia_matrix() const = 0;
     virtual Inertia inverse_inertia_matrix() const = 0;
