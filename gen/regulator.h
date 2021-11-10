@@ -12,16 +12,16 @@ namespace gen {
     template<typename T, typename ValueType = double>
     class Regulator : public ADBase<
             Regulator<T, ValueType>,
-            ModelBase<T>::state_dims + ModelBase<T>::contact_dims,
-            3 * ModelBase<T>::joint_state_dims + 3,
+            ModelBase<T>::state_dims,
+            ModelBase<T>::num_contacts + 3 * ModelBase<T>::joint_state_dims + 3,
             ModelBase<T>::control_dims,
             ValueType> {
     public:
         using Model = ModelBase<T>;
         using Base = ADBase<
                 Regulator<T, ValueType>,
-                Model::state_dims + Model::contact_dims,
-                3 * Model::joint_state_dims + 3,
+                Model::state_dims,
+                Model::num_contacts + 3 * Model::joint_state_dims + 3,
                 Model::control_dims,
                 ValueType>;
 
@@ -37,37 +37,42 @@ namespace gen {
         using typename Base::ADVector;
         using ScalarVector = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
 
+        using JointState = typename Model::JointState;
+        using ContactVector = typename Model::ContactVector;
+
         template<typename U>
         explicit Regulator(const U& u) : Base("regulator"), model(u) {}
 
     private:
         void build_zero() override {
-            using JointState = typename Model::JointState;
-            using ContactVector = typename Model::ContactVector;
-
             ScalarVector ad_x = Base::ad_x.template cast<Scalar>();
             ScalarVector ad_y(output_dims);
             CppAD::Independent(ad_x);
 
-            ContactVector f;
+            ContactVector f = ContactVector::Zero();
             JointState qd, vd, ad;
-            Scalar kp, kv, ka;
+            Scalar kp, kv, kf;
 
             Eigen::DenseIndex it = 0;
             ASSIGN_SEGMENT(model->state, ad_x, it, Model::state_dims)
-            ASSIGN_SEGMENT(f, ad_x, it, Model::contact_dims)
+            ASSIGN_SEGMENT(model->d, ad_x, it, Model::num_contacts)
             ASSIGN_SEGMENT(qd, ad_x, it, Model::joint_state_dims)
             ASSIGN_SEGMENT(vd, ad_x, it, Model::joint_state_dims)
             ASSIGN_SEGMENT(ad, ad_x, it, Model::joint_state_dims)
             kp = ad_x(it++);
             kv = ad_x(it++);
-            ka = ad_x(it++);
+            kf = ad_x(it++);
 
             auto q = model->state.position().joint_position();
             auto u = model->state.velocity().joint_velocity();
 
             JointState ep = qd - q, ev = vd - u;
             JointState qdd = ad + kv * ev + kp * ep;
+
+            // evaluate pure PD to get contact force
+            model->control = std::get<0>(model->id(qdd, f));
+            f = kf * std::get<2>(model->contact()) / model->dt;
+
             auto[tau, _] = model->id(qdd, f);
             ad_y << tau;
 
@@ -83,15 +88,15 @@ namespace gen {
         using Model = ModelBase<T>;
 
         rbd::State<ValueType, Model::joint_state_dims> x;
-        Eigen::Matrix<ValueType, Model::contact_dims, 1> f;
+        Eigen::Matrix<ValueType, Model::num_contacts, 1> d;
 
         Eigen::Matrix<ValueType, Model::joint_state_dims, 1> qd;
         Eigen::Matrix<ValueType, Model::joint_state_dims, 1> vd;
         Eigen::Matrix<ValueType, Model::joint_state_dims, 1> ad;
 
-        ValueType kp, kv, ka = 1;
+        ValueType kp, kv, kf;
 
-        DEF_PARAMETER_FILL(x, f, qd, vd, ad, kp, kv, ka)
+        DEF_PARAMETER_FILL(x, d, qd, vd, ad, kp, kv, kf)
     };
 }
 

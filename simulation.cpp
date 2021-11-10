@@ -28,8 +28,8 @@ void set_init_position(rbd::Position<Scalar, Biped::rcg::JointSpaceDimension>& p
     typename rbd::Position<Scalar, Biped::rcg::JointSpaceDimension>::Velocity delta;
     delta.base_angular() << M_PI, 0, 0;
 
-    // position.base_position() << 0, 0, 0.725;
-    position.base_position() << 0, 0, 1;
+    position.base_position() << 0, 0, 0.725;
+    // position.base_position() << 0, 0, 1;
     // position.base_position() << 0, 0, -0.724;
     // position += delta;
 
@@ -65,7 +65,7 @@ int main() {
 
     regulator.params.kp = 2500;
     regulator.params.kv = 100;
-    regulator.params.ka = 1;
+    regulator.params.kf = 0.5;
     regulator.params.qd << 0, M_PI_4, -M_PI_2, 0, M_PI_4, -M_PI_2;
     regulator.params.vd.setZero();
     regulator.params.ad.setZero();
@@ -95,15 +95,15 @@ int main() {
         contact_forces.evaluate();
 
         regulator.params.x << dynamics.params.x;
-        regulator.params.f << 0.5 * contact_forces.f;
+        regulator.params.d << dynamics.params.d;
         regulator.evaluate();
-
-        os << dynamics.f.transpose() << '\n';
-        osx << kinematics.com().transpose() << '\n';
 
         dynamics.params.u << regulator.f;
         dynamics.evaluate();
 
         dynamics.params.x << dynamics.f;
+
+        os << dynamics.f.transpose() << '\n';
+        osx << kinematics.com().transpose() << '\n';
     }
 }
