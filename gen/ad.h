@@ -20,6 +20,11 @@ void fill(Eigen::MatrixBase<Vector>& vector) const { \
 #define FILL_SEGMENT(to, from, it, size) (to).template segment<(size)>(it) << (from); (it) += (size);
 
 namespace gen {
+    enum EvalOption {
+        ZERO_ORDER,
+        FIRST_ORDER,
+    };
+
     template<typename T, typename ValueType>
     struct Parameter {
     };
@@ -27,11 +32,6 @@ namespace gen {
     template<typename Derived, int InputDims, int ParamDims, int OutputDims, typename ValueType, bool ComputeJacobian = false>
     class ADBase {
     public:
-        enum EvalOption {
-            ZERO_ORDER,
-            FIRST_ORDER,
-        };
-
         using Params = Parameter<Derived, ValueType>;
         static constexpr int input_dims = InputDims;
         static constexpr int param_dims = ParamDims;

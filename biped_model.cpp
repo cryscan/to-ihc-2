@@ -12,10 +12,10 @@ namespace Biped {
 
     Model::ContactVector Model::end_effector_positions() const {
         auto q = state.position().joint_position();
-        auto base_pose = state.position().base_pose();
+        auto base = state.position().base_pose();
 
-        Vector3 L_foot = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_L_foot(q)).translation();
-        Vector3 R_foot = base_pose * Affine3(homogeneous_transforms.fr_trunk_X_R_foot(q)).translation();
+        Vector3 L_foot = base * Affine3(homogeneous_transforms.fr_trunk_X_L_foot(q)).translation();
+        Vector3 R_foot = base * Affine3(homogeneous_transforms.fr_trunk_X_R_foot(q)).translation();
 
         ContactVector percussion;
         percussion << L_foot, R_foot;
@@ -24,8 +24,8 @@ namespace Biped {
 
     Model::Vector3 Model::com() const {
         auto q = state.position().joint_position();
-        auto base_pose = state.position().base_pose();
-        return base_pose * rcg::getWholeBodyCOM(inertia_properties, q, homogeneous_transforms);
+        auto base = state.position().base_pose();
+        return base * rcg::getWholeBodyCOM(inertia_properties, q, homogeneous_transforms);
     }
 
     Model::Inertia Model::inertia_matrix() const {

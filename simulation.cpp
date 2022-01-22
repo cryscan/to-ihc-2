@@ -73,7 +73,7 @@ int main() {
     std::ofstream osx("com.txt");
     std::ofstream os("out.txt");
 
-    for (int i = 0; i < 1000; ++i) {
+    for (int i = 0; i < 200; ++i) {
         kinematics.params.x << dynamics.params.x;
         kinematics.evaluate();
 
@@ -99,7 +99,7 @@ int main() {
         regulator.evaluate();
 
         dynamics.params.u << regulator.f;
-        dynamics.evaluate();
+        dynamics.evaluate(gen::ZERO_ORDER);
 
         dynamics.params.x << dynamics.f;
 
